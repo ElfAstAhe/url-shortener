@@ -2,9 +2,13 @@ package handler
 
 import (
 	"fmt"
-	"github.com/ElfAstAhe/url-shortener/internal/utils"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"strings"
+
+	"github.com/ElfAstAhe/url-shortener/internal/repository"
+	"github.com/ElfAstAhe/url-shortener/internal/service"
+	"github.com/ElfAstAhe/url-shortener/internal/utils"
 )
 
 const RootHandlePath string = "/"
@@ -24,11 +28,57 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func rootGETHandler(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "Method implementation in process", http.StatusMethodNotAllowed)
+	paths := strings.Split(r.URL.Path, RootHandlePath)
+	if !(len(paths) >= 2) {
+		http.Error(w, "No key applied: example [http://localhost:8080/{short_key}]", http.StatusBadRequest)
+
+		return
+	}
+
+	key := paths[1]
+	fullUrl, err := service.NewShorterService(repository.NewShortUriInMemRepo()).GetUrl(key)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+
+	http.Redirect(w, r, fullUrl, http.StatusTemporaryRedirect)
+}
+
+// small helper for local tests (remove before PR)
+func _(w http.ResponseWriter, r *http.Request) {
+	body := fmt.Sprintf("Method [%s]\r\n", r.Method)
+	body += fmt.Sprintf("HEADERS ========================\r\n")
+	for k, v := range r.Header {
+		body += fmt.Sprintf("%s: %v\r\n", k, v)
+	}
+	body += fmt.Sprintf("PATH ===========================\r\n")
+	body += fmt.Sprintf("Path [%s]\r\n", r.URL.Path)
+	body += fmt.Sprintf("Path trimmed [%s]\r\n", strings.TrimPrefix(r.URL.Path, RootHandlePath))
+	paths := strings.Split(r.URL.Path, "/")
+	body += fmt.Sprintf("Paths array [%v]\r\n", paths)
+	body += fmt.Sprintf("QUERY PARAMS ===================\r\n")
+	for k, v := range r.URL.Query() {
+		body += fmt.Sprintf("%s: %v\r\n", k, v)
+	}
+	body += fmt.Sprintf("FORM ===========================\r\n")
+	for k, v := range r.Form {
+		body += fmt.Sprintf("%s: %v\r\n", k, v)
+	}
+	body += fmt.Sprintf("PATH PARAMS ====================\r\n")
+	key := r.PathValue("key")
+	if key == "" {
+		body += fmt.Sprintf("No {key} param\r\n")
+	} else {
+		body += fmt.Sprintf("Key [%s]", key)
+	}
+
+	w.Write([]byte(body))
 }
 
 func rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
-	data, err := ioutil.ReadAll(r.Body)
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}

@@ -1,15 +1,16 @@
 package service
 
 import (
-	"github.com/ElfAstAhe/url-shortener/internal/repository"
+	models "github.com/ElfAstAhe/url-shortener/internal/model"
+	repos "github.com/ElfAstAhe/url-shortener/internal/repository"
 	"github.com/ElfAstAhe/url-shortener/internal/utils"
 )
 
 type Shorter struct {
-	Repository repository.ShortUriRepository
+	Repository repos.ShortUriRepository
 }
 
-func NewShorterService(repository repository.ShortUriRepository) *Shorter {
+func NewShorterService(repository repos.ShortUriRepository) *Shorter {
 	return &Shorter{Repository: repository}
 }
 
@@ -23,6 +24,16 @@ func (s Shorter) GetUrl(key string) (string, error) {
 }
 
 func (s Shorter) Store(url string) (string, error) {
-	key := utils.EncodeUriStr(url)
+	key := string(utils.EncodeUriStr(url))
+	model, err := models.NewShortUri(url, key)
+	if err != nil {
+		return "", err
+	}
 
+	model, err = s.Repository.Create(model)
+	if err != nil {
+		return "", err
+	}
+
+	return model.Key, nil
 }
