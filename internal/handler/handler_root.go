@@ -74,7 +74,7 @@ func _(w http.ResponseWriter, r *http.Request) {
 	body += fmt.Sprint("PATH PARAMS ====================\r\n")
 	key := r.PathValue("key")
 	if key == "" {
-		body += fmt.Sprintf("No {key} param\r\n")
+		body += fmt.Sprint("No {key} param\r\n")
 	} else {
 		body += fmt.Sprintf("Key [%s]", key)
 	}
