@@ -6,9 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/ElfAstAhe/url-shortener/internal/repository"
-	"github.com/ElfAstAhe/url-shortener/internal/service"
-	"github.com/ElfAstAhe/url-shortener/internal/utils"
+	_srv "github.com/ElfAstAhe/url-shortener/internal/service"
+	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
 )
 
 const RootHandlePath string = "/"
@@ -36,9 +35,15 @@ func rootGETHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	key := paths[1]
-	fullUrl, err := service.NewShorterService(repository.NewShortUriInMemRepo()).GetUrl(key)
+	fullUrl, err := _srv.NewShorterService().GetUrl(key)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+
+	if fullUrl == "" {
+		http.Error(w, "No shorter url found!", http.StatusNotFound)
 
 		return
 	}
@@ -78,18 +83,19 @@ func _(w http.ResponseWriter, r *http.Request) {
 }
 
 func rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
-	data, err := io.ReadAll(r.Body)
+	var data []byte
+	var err error
+	data, err = io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	hashBytes := utils.EncodeUri(data)
+	var key string
+	key, err = _srv.NewShorterService().Store(string(data))
+	newUri := _utl.BuildNewUri(r, key)
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-
-	newUri := utils.BuildNewUri(r.URL, string(hashBytes[:]))
-
 	_, err = w.Write([]byte(newUri))
 	if err != nil {
 		fmt.Printf("error writing response [%s]", err.Error())

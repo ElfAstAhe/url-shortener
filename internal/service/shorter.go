@@ -1,17 +1,18 @@
 package service
 
 import (
-	models "github.com/ElfAstAhe/url-shortener/internal/model"
-	repos "github.com/ElfAstAhe/url-shortener/internal/repository"
-	"github.com/ElfAstAhe/url-shortener/internal/utils"
+	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
+	_model "github.com/ElfAstAhe/url-shortener/internal/model"
+	_repos "github.com/ElfAstAhe/url-shortener/internal/repository"
+	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
 )
 
 type Shorter struct {
-	Repository repos.ShortUriRepository
+	Repository _repos.ShortUriRepository
 }
 
-func NewShorterService(repository repos.ShortUriRepository) *Shorter {
-	return &Shorter{Repository: repository}
+func NewShorterService() *Shorter {
+	return &Shorter{Repository: _repos.NewShortUriRepository(&_cfg.GlobalConfig.Db)}
 }
 
 func (s Shorter) GetUrl(key string) (string, error) {
@@ -19,13 +20,16 @@ func (s Shorter) GetUrl(key string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if model == nil {
+		return "", nil
+	}
 
 	return model.OriginalUrl.String(), nil
 }
 
 func (s Shorter) Store(url string) (string, error) {
-	key := string(utils.EncodeUriStr(url))
-	model, err := models.NewShortUri(url, key)
+	key := _utl.EncodeUriStr(url)
+	model, err := _model.NewShortUri(url, key)
 	if err != nil {
 		return "", err
 	}
