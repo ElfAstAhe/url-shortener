@@ -12,7 +12,7 @@ type Shorter struct {
 }
 
 func NewShorterService() *Shorter {
-	return &Shorter{Repository: _repos.NewShortUriRepository(&_cfg.GlobalConfig.DB)}
+	return &Shorter{Repository: _repos.NewShortURIRepository(&_cfg.GlobalConfig.DB)}
 }
 
 func (s Shorter) GetURL(key string) (string, error) {

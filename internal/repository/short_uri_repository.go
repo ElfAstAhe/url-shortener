@@ -11,7 +11,7 @@ type ShortURIRepository interface {
 	Create(shortURI *_model.ShortURI) (*_model.ShortURI, error)
 }
 
-func NewShortUriRepository(dbConfig *_cfg.DBConfig) ShortURIRepository {
+func NewShortURIRepository(dbConfig *_cfg.DBConfig) ShortURIRepository {
 	// check in future (for next dev iteration)
 	if dbConfig == nil || dbConfig.Kind == _cfg.DBKindInMemory {
 		return NewShortURIInMemRepo()
