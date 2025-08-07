@@ -5,18 +5,18 @@ import (
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
 )
 
-type shortUriInMemRepo struct {
-	Db *_db.InMemoryDb
+type shortURIInMemRepo struct {
+	Db *_db.InMemoryDB
 }
 
-func NewShortUriInMemRepo() ShortUriRepository {
-	return &shortUriInMemRepo{
-		Db: _db.InMemoryDbInstance,
+func NewShortUriInMemRepo() ShortURIRepository {
+	return &shortURIInMemRepo{
+		Db: _db.InMemoryDBInstance,
 	}
 }
 
-func (r *shortUriInMemRepo) GetById(id string) (*_model.ShortUri, error) {
-	for _, value := range r.Db.ShortUri {
+func (r *shortURIInMemRepo) GetById(id string) (*_model.ShortURI, error) {
+	for _, value := range r.Db.ShortURI {
 		if value.Id == id {
 			return value, nil
 		}
@@ -25,13 +25,13 @@ func (r *shortUriInMemRepo) GetById(id string) (*_model.ShortUri, error) {
 	return nil, nil
 }
 
-func (r *shortUriInMemRepo) GetByKey(key string) (*_model.ShortUri, error) {
-	res := r.Db.ShortUri[key]
+func (r *shortURIInMemRepo) GetByKey(key string) (*_model.ShortURI, error) {
+	res := r.Db.ShortURI[key]
 
 	return res, nil
 }
 
-func (r *shortUriInMemRepo) Create(shortUri *_model.ShortUri) (*_model.ShortUri, error) {
+func (r *shortURIInMemRepo) Create(shortUri *_model.ShortURI) (*_model.ShortURI, error) {
 	founded, err := r.GetByKey(shortUri.Key)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (r *shortUriInMemRepo) Create(shortUri *_model.ShortUri) (*_model.ShortUri,
 		return founded, nil
 	}
 
-	r.Db.ShortUri[shortUri.Key] = shortUri
+	r.Db.ShortURI[shortUri.Key] = shortUri
 
 	return shortUri, nil
 }

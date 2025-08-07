@@ -9,13 +9,13 @@ import (
 func BuildNewUri(request *http.Request, key string) string {
 	// current using only http scheme for dev iteration 1
 	// new URL
-	newUrl := &url.URL{
+	newURL := &url.URL{
 		Scheme: "http",
 		Host:   request.Host,
 	}
 
 	// add path
-	newUrl = newUrl.JoinPath("/", key)
+	newURL = newURL.JoinPath("/", key)
 
-	return newUrl.String()
+	return newURL.String()
 }

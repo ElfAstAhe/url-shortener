@@ -35,43 +35,43 @@ func rootGETHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	key := paths[1]
-	fullUrl, err := _srv.NewShorterService().GetUrl(key)
+	fullURL, err := _srv.NewShorterService().GetURL(key)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
 		return
 	}
 
-	if fullUrl == "" {
+	if fullURL == "" {
 		http.Error(w, "No shorter url found!", http.StatusNotFound)
 
 		return
 	}
 
-	http.Redirect(w, r, fullUrl, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, fullURL, http.StatusTemporaryRedirect)
 }
 
 // small helper for local tests (remove before PR)
 func _(w http.ResponseWriter, r *http.Request) {
 	body := fmt.Sprintf("Method [%s]\r\n", r.Method)
-	body += fmt.Sprintf("HEADERS ========================\r\n")
+	body += fmt.Sprint("HEADERS ========================\r\n")
 	for k, v := range r.Header {
 		body += fmt.Sprintf("%s: %v\r\n", k, v)
 	}
-	body += fmt.Sprintf("PATH ===========================\r\n")
+	body += fmt.Sprint("PATH ===========================\r\n")
 	body += fmt.Sprintf("Path [%s]\r\n", r.URL.Path)
 	body += fmt.Sprintf("Path trimmed [%s]\r\n", strings.TrimPrefix(r.URL.Path, RootHandlePath))
 	paths := strings.Split(r.URL.Path, "/")
 	body += fmt.Sprintf("Paths array [%v]\r\n", paths)
-	body += fmt.Sprintf("QUERY PARAMS ===================\r\n")
+	body += fmt.Sprint("QUERY PARAMS ===================\r\n")
 	for k, v := range r.URL.Query() {
 		body += fmt.Sprintf("%s: %v\r\n", k, v)
 	}
-	body += fmt.Sprintf("FORM ===========================\r\n")
+	body += fmt.Sprint("FORM ===========================\r\n")
 	for k, v := range r.Form {
 		body += fmt.Sprintf("%s: %v\r\n", k, v)
 	}
-	body += fmt.Sprintf("PATH PARAMS ====================\r\n")
+	body += fmt.Sprint("PATH PARAMS ====================\r\n")
 	key := r.PathValue("key")
 	if key == "" {
 		body += fmt.Sprintf("No {key} param\r\n")
@@ -92,11 +92,14 @@ func rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 
 	var key string
 	key, err = _srv.NewShorterService().Store(string(data))
-	newUri := _utl.BuildNewUri(r, key)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	newURI := _utl.BuildNewUri(r, key)
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write([]byte(newUri))
+	_, err = w.Write([]byte(newURI))
 	if err != nil {
 		fmt.Printf("error writing response [%s]", err.Error())
 

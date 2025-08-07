@@ -1,5 +1,5 @@
 package config
 
-const DefaultHttpSchema = "http"
-const DefaultHttpHost string = "localhost"
-const DefaultHttpPort int = 8080
+const DefaultHTTPSchema = "http"
+const DefaultHTTPHost string = "localhost"
+const DefaultHTTPPort int = 8080

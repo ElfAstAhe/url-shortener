@@ -2,17 +2,17 @@ package errors
 
 import "fmt"
 
-type InvalidOriginalUrlError struct {
-	OriginalUrl string
+type InvalidOriginalURLError struct {
+	OriginalURL string
 }
 
-func (i InvalidOriginalUrlError) Error() string {
-	return fmt.Sprintf("OriginalUrl ['%s'] is invalid", i.OriginalUrl)
+func (i InvalidOriginalURLError) Error() string {
+	return fmt.Sprintf("OriginalURL ['%s'] is invalid", i.OriginalURL)
 }
 
-func (i InvalidOriginalUrlError) RuntimeError() {
+func (i InvalidOriginalURLError) RuntimeError() {
 }
 
-func NewInvalidOriginalUrlError(originalUrl string) *InvalidOriginalUrlError {
-	return &InvalidOriginalUrlError{OriginalUrl: originalUrl}
+func NewInvalidOriginalURLError(originalURL string) *InvalidOriginalURLError {
+	return &InvalidOriginalURLError{OriginalURL: originalURL}
 }

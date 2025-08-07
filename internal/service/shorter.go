@@ -8,14 +8,14 @@ import (
 )
 
 type Shorter struct {
-	Repository _repos.ShortUriRepository
+	Repository _repos.ShortURIRepository
 }
 
 func NewShorterService() *Shorter {
-	return &Shorter{Repository: _repos.NewShortUriRepository(&_cfg.GlobalConfig.Db)}
+	return &Shorter{Repository: _repos.NewShortUriRepository(&_cfg.GlobalConfig.DB)}
 }
 
-func (s Shorter) GetUrl(key string) (string, error) {
+func (s Shorter) GetURL(key string) (string, error) {
 	model, err := s.Repository.GetByKey(key)
 	if err != nil {
 		return "", err
@@ -24,11 +24,11 @@ func (s Shorter) GetUrl(key string) (string, error) {
 		return "", nil
 	}
 
-	return model.OriginalUrl.String(), nil
+	return model.OriginalURL.String(), nil
 }
 
 func (s Shorter) Store(url string) (string, error) {
-	key := _utl.EncodeUriStr(url)
+	key := _utl.EncodeURIStr(url)
 	model, err := _model.NewShortUri(url, key)
 	if err != nil {
 		return "", err

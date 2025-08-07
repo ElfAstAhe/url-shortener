@@ -2,18 +2,18 @@ package db
 
 import "github.com/ElfAstAhe/url-shortener/internal/model"
 
-type InMemoryDb struct {
-	ShortUri map[string]*model.ShortUri
+type InMemoryDB struct {
+	ShortURI map[string]*model.ShortURI
 }
 
-var InMemoryDbInstance *InMemoryDb
+var InMemoryDBInstance *InMemoryDB
 
-func newInMemoryDb() *InMemoryDb {
-	return &InMemoryDb{
-		ShortUri: make(map[string]*model.ShortUri),
+func newInMemoryDB() *InMemoryDB {
+	return &InMemoryDB{
+		ShortURI: make(map[string]*model.ShortURI),
 	}
 }
 
 func init() {
-	InMemoryDbInstance = newInMemoryDb()
+	InMemoryDBInstance = newInMemoryDB()
 }

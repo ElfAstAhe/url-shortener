@@ -23,7 +23,7 @@ func main() {
 	mux.HandleFunc(handler.RootHandlePath, handler.RootHandler)
 
 	fmt.Println("Starting server...")
-	if err := http.ListenAndServe(_cfg.GlobalConfig.Http[0].GetHost(), mux); err != nil {
+	if err := http.ListenAndServe(_cfg.GlobalConfig.HTTP[0].GetHost(), mux); err != nil {
 		fmt.Println("Error starting server:", err)
 		panic(err)
 	}

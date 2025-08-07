@@ -1,6 +1,6 @@
 package config
 
-type DbConfig struct {
+type DBConfig struct {
 	Kind     string `json:"kind"`
 	Host     string `json:"host"`
 	Port     int    `json:"port"`
@@ -9,8 +9,8 @@ type DbConfig struct {
 	Password string `json:"password"`
 }
 
-func NewDbConfig(kind string) *DbConfig {
-	return &DbConfig{
+func NewDBConfig(kind string) *DBConfig {
+	return &DBConfig{
 		Kind: kind,
 	}
 }
