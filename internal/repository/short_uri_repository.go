@@ -6,18 +6,18 @@ import (
 )
 
 type ShortURIRepository interface {
-	GetById(id string) (*_model.ShortURI, error)
+	GetByID(id string) (*_model.ShortURI, error)
 	GetByKey(key string) (*_model.ShortURI, error)
-	Create(shortUri *_model.ShortURI) (*_model.ShortURI, error)
+	Create(shortURI *_model.ShortURI) (*_model.ShortURI, error)
 }
 
 func NewShortUriRepository(dbConfig *_cfg.DBConfig) ShortURIRepository {
 	// check in future (for next dev iteration)
 	if dbConfig == nil || dbConfig.Kind == _cfg.DBKindInMemory {
-		return NewShortUriInMemRepo()
+		return NewShortURIInMemRepo()
 	} else if dbConfig.Kind == _cfg.DBKindPostgres {
-		return NewShortUriInMemRepo()
+		return NewShortURIInMemRepo()
 	}
 
-	return NewShortUriInMemRepo()
+	return NewShortURIInMemRepo()
 }

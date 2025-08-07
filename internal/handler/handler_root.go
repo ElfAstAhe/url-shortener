@@ -95,7 +95,7 @@ func rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	newURI := _utl.BuildNewUri(r, key)
+	newURI := _utl.BuildNewURI(r, key)
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)

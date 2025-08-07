@@ -29,7 +29,7 @@ func (s Shorter) GetURL(key string) (string, error) {
 
 func (s Shorter) Store(url string) (string, error) {
 	key := _utl.EncodeURIStr(url)
-	model, err := _model.NewShortUri(url, key)
+	model, err := _model.NewShortURI(url, key)
 	if err != nil {
 		return "", err
 	}

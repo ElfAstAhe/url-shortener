@@ -5,8 +5,8 @@ import (
 	"net/url"
 )
 
-// BuildNewUri - build URI for new resource
-func BuildNewUri(request *http.Request, key string) string {
+// BuildNewURI - build URI for new resource
+func BuildNewURI(request *http.Request, key string) string {
 	// current using only http scheme for dev iteration 1
 	// new URL
 	newURL := &url.URL{

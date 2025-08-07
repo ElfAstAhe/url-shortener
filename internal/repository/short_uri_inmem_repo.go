@@ -6,18 +6,18 @@ import (
 )
 
 type shortURIInMemRepo struct {
-	Db *_db.InMemoryDB
+	DB *_db.InMemoryDB
 }
 
-func NewShortUriInMemRepo() ShortURIRepository {
+func NewShortURIInMemRepo() ShortURIRepository {
 	return &shortURIInMemRepo{
-		Db: _db.InMemoryDBInstance,
+		DB: _db.InMemoryDBInstance,
 	}
 }
 
-func (r *shortURIInMemRepo) GetById(id string) (*_model.ShortURI, error) {
-	for _, value := range r.Db.ShortURI {
-		if value.Id == id {
+func (r *shortURIInMemRepo) GetByID(id string) (*_model.ShortURI, error) {
+	for _, value := range r.DB.ShortURI {
+		if value.ID == id {
 			return value, nil
 		}
 	}
@@ -26,13 +26,13 @@ func (r *shortURIInMemRepo) GetById(id string) (*_model.ShortURI, error) {
 }
 
 func (r *shortURIInMemRepo) GetByKey(key string) (*_model.ShortURI, error) {
-	res := r.Db.ShortURI[key]
+	res := r.DB.ShortURI[key]
 
 	return res, nil
 }
 
-func (r *shortURIInMemRepo) Create(shortUri *_model.ShortURI) (*_model.ShortURI, error) {
-	founded, err := r.GetByKey(shortUri.Key)
+func (r *shortURIInMemRepo) Create(shortURI *_model.ShortURI) (*_model.ShortURI, error) {
+	founded, err := r.GetByKey(shortURI.Key)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (r *shortURIInMemRepo) Create(shortUri *_model.ShortURI) (*_model.ShortURI,
 		return founded, nil
 	}
 
-	r.Db.ShortURI[shortUri.Key] = shortUri
+	r.DB.ShortURI[shortURI.Key] = shortURI
 
-	return shortUri, nil
+	return shortURI, nil
 }
