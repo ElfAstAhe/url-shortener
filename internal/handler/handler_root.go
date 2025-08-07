@@ -54,27 +54,27 @@ func rootGETHandler(w http.ResponseWriter, r *http.Request) {
 // small helper for local tests (remove before PR)
 func _(w http.ResponseWriter, r *http.Request) {
 	body := fmt.Sprintf("Method [%s]\r\n", r.Method)
-	body += fmt.Sprint("HEADERS ========================\r\n")
+	body += "HEADERS ========================\r\n"
 	for k, v := range r.Header {
 		body += fmt.Sprintf("%s: %v\r\n", k, v)
 	}
-	body += fmt.Sprint("PATH ===========================\r\n")
+	body += "PATH ===========================\r\n"
 	body += fmt.Sprintf("Path [%s]\r\n", r.URL.Path)
 	body += fmt.Sprintf("Path trimmed [%s]\r\n", strings.TrimPrefix(r.URL.Path, RootHandlePath))
 	paths := strings.Split(r.URL.Path, "/")
 	body += fmt.Sprintf("Paths array [%v]\r\n", paths)
-	body += fmt.Sprint("QUERY PARAMS ===================\r\n")
+	body += "QUERY PARAMS ===================\r\n"
 	for k, v := range r.URL.Query() {
 		body += fmt.Sprintf("%s: %v\r\n", k, v)
 	}
-	body += fmt.Sprint("FORM ===========================\r\n")
+	body += "FORM ===========================\r\n"
 	for k, v := range r.Form {
 		body += fmt.Sprintf("%s: %v\r\n", k, v)
 	}
-	body += fmt.Sprint("PATH PARAMS ====================\r\n")
+	body += "PATH PARAMS ====================\r\n"
 	key := r.PathValue("key")
 	if key == "" {
-		body += fmt.Sprint("No {key} param\r\n")
+		body += "No {key} param\r\n"
 	} else {
 		body += fmt.Sprintf("Key [%s]", key)
 	}
