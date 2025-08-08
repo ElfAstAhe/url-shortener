@@ -33,16 +33,20 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(resp.Body)
+	defer closeOnly(resp.Body)
+
 	fmt.Printf("Response status [%v]\r\n", resp.Status)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		panic(err)
 	}
+	defer closeOnly(resp.Body)
 	fmt.Printf("Body [%v]", string(body))
+}
+
+func closeOnly(closer io.Closer) {
+	err := closer.Close()
+	if err != nil {
+		panic(err)
+	}
 }
