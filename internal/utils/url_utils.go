@@ -1,21 +1,22 @@
 package utils
 
 import (
-	"net/http"
+	"fmt"
 	"net/url"
+	"strings"
 )
 
-// BuildNewURI - build URI for new resource
-func BuildNewURI(request *http.Request, key string) string {
-	// current using only http scheme for dev iteration 1
-	// new URL
-	newURL := &url.URL{
-		Scheme: "http",
-		Host:   request.Host,
+func BuildNewURI(baseURL string, key string) string {
+	var _baseURL string = strings.TrimRight(strings.TrimSpace(baseURL), "/")
+	var _key string = strings.TrimSpace(key)
+	if _baseURL == "" || _key == "" {
+		return ""
+	}
+	_resURL, err := url.Parse(_baseURL)
+	if err != nil {
+		fmt.Println(err)
+		return ""
 	}
 
-	// add path
-	newURL = newURL.JoinPath("/", key)
-
-	return newURL.String()
+	return _resURL.JoinPath(_key).String()
 }

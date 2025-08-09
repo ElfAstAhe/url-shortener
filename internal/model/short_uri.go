@@ -16,14 +16,22 @@ type ShortURI struct {
 }
 
 func NewShortURI(originalURL string, key string) (*ShortURI, error) {
+	return NewShortURIFull(uuid.New().String(), originalURL, key)
+}
+
+func NewShortURIFull(ID string, originalURL string, key string) (*ShortURI, error) {
 	origURL, err := url.Parse(originalURL)
 	if err != nil {
 		return nil, _err.NewInvalidOriginalURLError(originalURL)
 	}
-	uri := &ShortURI{
+
+	return NewShortURIComplete(ID, origURL, key), nil
+}
+
+func NewShortURIComplete(ID string, origURL *url.URL, key string) *ShortURI {
+	return &ShortURI{
+		ID:          ID,
 		OriginalURL: *origURL,
 		Key:         key,
-		ID:          uuid.New().String(),
 	}
-	return uri, nil
 }

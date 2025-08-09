@@ -9,6 +9,7 @@ const DBKindPostgres string = "POSTGRES"
 
 type Config struct {
 	AppName string       `json:"app_name"`
+	BaseURL string       `json:"base_url"`
 	HTTP    []HTTPConfig `json:"http"`
 	DB      DBConfig     `json:"db"`
 }
@@ -19,6 +20,7 @@ func (c *Config) LoadConfig() error {
 	fmt.Println("Loading config...")
 
 	c.AppName = "URL shortener"
+	c.BaseURL = "http://localhost:8080"
 	c.HTTP = []HTTPConfig{*NewHTTPConfig(DefaultHTTPSchema, DefaultHTTPHost, DefaultHTTPPort)}
 	c.DB = *NewDBConfig(DBKindInMemory)
 

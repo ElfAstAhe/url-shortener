@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/ElfAstAhe/url-shortener/internal/config"
 	_srv "github.com/ElfAstAhe/url-shortener/internal/service"
 	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
 )
@@ -34,7 +35,12 @@ func rootGETHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	key := paths[1]
+	key := strings.Trim(paths[1], " ")
+	if key == "" {
+		http.Error(w, "No key applied: example [http://localhost:8080/{short_key}]", http.StatusBadRequest)
+
+		return
+	}
 	fullURL, err := _srv.NewShorterService().GetURL(key)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -85,18 +91,23 @@ func _(w http.ResponseWriter, r *http.Request) {
 func rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 	var data []byte
 	var err error
+	// read income data
 	data, err = io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
+	// store data
 	var key string
 	key, err = _srv.NewShorterService().Store(string(data))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	newURI := _utl.BuildNewURI(r, key)
 
+	// prepare outcome data
+	newURI := _utl.BuildNewURI(config.GlobalConfig.BaseURL, key)
+
+	// outcome data
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write([]byte(newURI))
