@@ -7,8 +7,8 @@ import (
 )
 
 func BuildNewURI(baseURL string, key string) string {
-	var _baseURL string = strings.TrimRight(strings.TrimSpace(baseURL), "/")
-	var _key string = strings.TrimSpace(key)
+	var _baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
+	var _key = strings.TrimSpace(key)
 	if _baseURL == "" || _key == "" {
 		return ""
 	}

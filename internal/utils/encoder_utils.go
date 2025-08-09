@@ -11,7 +11,7 @@ func EncodeURIStr(data string) string {
 		return ""
 	}
 	arr := EncodeURI([]byte(data))
-	if arr == nil || len(arr) == 0 {
+	if len(arr) == 0 {
 		return ""
 	}
 	res := hex.EncodeToString(arr)
@@ -21,7 +21,7 @@ func EncodeURIStr(data string) string {
 
 // EncodeURI - encode new URI
 func EncodeURI(data []byte) []byte {
-	if data == nil || len(data) == 0 {
+	if len(data) == 0 {
 		return nil
 	}
 	hasher := md5.New()

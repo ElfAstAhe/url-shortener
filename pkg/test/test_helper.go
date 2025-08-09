@@ -1,6 +1,6 @@
 package test
 
-type HttpTestCase struct {
+type HTTPTestCase struct {
 	Name               string
 	Method             string
 	Path               string
