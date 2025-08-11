@@ -1,7 +1,6 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -18,9 +17,11 @@ func (hc *HTTPConfig) String() string {
 }
 
 func (hc *HTTPConfig) Set(s string) error {
-	params := strings.Split(s, ":")
+	temp := s
+	params := strings.Split(temp, ":")
 	if len(params) != 2 {
-		return errors.New("invalid http config format, example: localhost:8080")
+		temp = "localhost:8080"
+		params = strings.Split(temp, ":")
 	}
 	hc.Host = params[0]
 	var err error
