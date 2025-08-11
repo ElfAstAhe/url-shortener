@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
-	"github.com/ElfAstAhe/url-shortener/internal/handler"
 	"net/http"
 	"os"
+
+	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
+	_hnd "github.com/ElfAstAhe/url-shortener/internal/handler"
 )
 
 func main() {
@@ -18,12 +19,10 @@ func main() {
 	}
 
 	fmt.Println("Initializing server...")
-
-	mux := http.NewServeMux()
-	mux.HandleFunc(handler.RootHandlePath, handler.RootHandler)
+	var router = _hnd.BuildRouter()
 
 	fmt.Println("Starting server...")
-	if err := http.ListenAndServe(_cfg.GlobalConfig.HTTP[0].GetHost(), mux); err != nil {
+	if err := http.ListenAndServe(_cfg.GlobalConfig.HTTP.GetHost(), router); err != nil {
 		fmt.Println("Error starting server:", err)
 		panic(err)
 	}

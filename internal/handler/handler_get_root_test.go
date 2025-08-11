@@ -10,26 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRootHandler_unacceptableMethods_shouldReturnBadRequest(t *testing.T) {
-	cases := []test.HTTPTestCase{
-		{Name: "http method CONNECT", Method: http.MethodConnect, ExpectedStatusCode: http.StatusBadRequest},
-		{Name: "http method HEAD", Method: http.MethodHead, ExpectedStatusCode: http.StatusBadRequest},
-		{Name: "http method DELETE", Method: http.MethodDelete, ExpectedStatusCode: http.StatusBadRequest},
-		{Name: "http method PATCH", Method: http.MethodPatch, ExpectedStatusCode: http.StatusBadRequest},
-		{Name: "http method PUT", Method: http.MethodPut, ExpectedStatusCode: http.StatusBadRequest},
-	}
-
-	for _, testCase := range cases {
-		t.Run(testCase.Name, func(t *testing.T) {
-			req := httptest.NewRequest(testCase.Method, RootHandlePath, nil)
-			recorder := httptest.NewRecorder()
-			RootHandler(recorder, req)
-
-			assert.Equal(t, http.StatusBadRequest, recorder.Code)
-		})
-	}
-}
-
 func TestRootHandler_getMethod_emptyKey_shouldReturnBadRequest(t *testing.T) {
 	cases := []test.HTTPTestCase{
 		{Name: "method GET path /", Method: http.MethodGet, Path: "/", ExpectedStatusCode: http.StatusBadRequest},
@@ -40,7 +20,7 @@ func TestRootHandler_getMethod_emptyKey_shouldReturnBadRequest(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			req := httptest.NewRequest(testCase.Method, testCase.Path, nil)
 			recorder := httptest.NewRecorder()
-			RootHandler(recorder, req)
+			rootGETHandler(recorder, req)
 
 			assert.Equal(t, testCase.ExpectedStatusCode, recorder.Code)
 		})
@@ -61,7 +41,7 @@ func TestRootHandler_getMethod_success(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			req := httptest.NewRequest(testCase.Method, testCase.Path, nil)
 			recorder := httptest.NewRecorder()
-			RootHandler(recorder, req)
+			rootGETHandler(recorder, req)
 
 			// assert
 			assert.Equal(t, testCase.ExpectedStatusCode, recorder.Code)
@@ -70,5 +50,3 @@ func TestRootHandler_getMethod_success(t *testing.T) {
 	}
 
 }
-
-func TestRootHandler_getMethod_dataNotExists_shouldReturn404(t *testing.T) {}
