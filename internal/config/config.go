@@ -1,6 +1,7 @@
 package config
 
 import (
+	"flag"
 	"fmt"
 )
 
@@ -16,13 +17,24 @@ type Config struct {
 
 var GlobalConfig Config
 
+func init() {
+	flag.StringVar(&GlobalConfig.AppName, "p", "URL shortener", "application name")
+	flag.StringVar(&GlobalConfig.BaseURL, "b", "http://localhost:8080", "base url")
+	flag.StringVar(&GlobalConfig.DB.Kind, "db", DBKindInMemory, "db kind")
+	flag.Var(&GlobalConfig.HTTP, "a", "http interface")
+}
+
 func (c *Config) LoadConfig() error {
 	fmt.Println("Loading config...")
+	/*
+	   c.AppName = "URL shortener"
+	   c.BaseURL = "http://localhost:8080"
+	   c.HTTP = *NewHTTPConfig(DefaultHTTPSchema, DefaultHTTPHost, DefaultHTTPPort)
+	   c.DB = *NewDBConfig(DBKindInMemory)
+	*/
+	flag.Parse()
 
-	c.AppName = "URL shortener"
-	c.BaseURL = "http://localhost:8080"
-	c.HTTP = *NewHTTPConfig(DefaultHTTPSchema, DefaultHTTPHost, DefaultHTTPPort)
-	c.DB = *NewDBConfig(DBKindInMemory)
+	fmt.Printf("Config: %+v\r\n", GlobalConfig)
 
 	return nil
 }
