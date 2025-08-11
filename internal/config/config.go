@@ -21,6 +21,7 @@ func init() {
 	flag.StringVar(&GlobalConfig.AppName, "p", "URL shortener", "application name")
 	flag.StringVar(&GlobalConfig.BaseURL, "b", "http://localhost:8080", "base url")
 	flag.StringVar(&GlobalConfig.DB.Kind, "db", DBKindInMemory, "db kind")
+	GlobalConfig.HTTP = *NewHTTPConfig(DefaultHTTPSchema, DefaultHTTPHost, DefaultHTTPPort)
 	flag.Var(&GlobalConfig.HTTP, "a", "http interface")
 }
 
