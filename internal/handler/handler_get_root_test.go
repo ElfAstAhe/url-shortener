@@ -11,16 +11,19 @@ import (
 )
 
 func TestRootHandler_getMethod_emptyKey_shouldReturnBadRequest(t *testing.T) {
+	// prepare
+	router := BuildRouter()
+	// test cases
 	cases := []test.HTTPTestCase{
-		{Name: "method GET path /", Method: http.MethodGet, Path: "/", ExpectedStatusCode: http.StatusBadRequest},
-		{Name: "method GET path //", Method: http.MethodGet, Path: "//", ExpectedStatusCode: http.StatusBadRequest},
+		{Name: "method GET path /", Method: http.MethodGet, Path: "/", ExpectedStatusCode: http.StatusMethodNotAllowed},
+		{Name: "method GET path //", Method: http.MethodGet, Path: "//", ExpectedStatusCode: http.StatusNotFound},
 	}
-
+	// act
 	for _, testCase := range cases {
 		t.Run(testCase.Name, func(t *testing.T) {
 			req := httptest.NewRequest(testCase.Method, testCase.Path, nil)
 			recorder := httptest.NewRecorder()
-			rootGETHandler(recorder, req)
+			router.ServeHTTP(recorder, req)
 
 			assert.Equal(t, testCase.ExpectedStatusCode, recorder.Code)
 		})
@@ -31,17 +34,18 @@ func TestRootHandler_getMethod_success(t *testing.T) {
 	// prepare
 	expectedURL := "http://localhost/test/data"
 	_, _ = _srv.NewShorterService().Store(expectedURL)
-	//
+	router := BuildRouter()
+	// test cases
 	testCases := []test.HTTPTestCase{
-		{Name: "method GET -> not found", Method: http.MethodGet, Path: "/123", ExpectedStatusCode: http.StatusNotFound, ExpectedStrValue: ""},
-		{Name: "method GET -> redirect", Method: http.MethodGet, Path: "/9fae3719b30b1794910a21beefc7f375", ExpectedStatusCode: http.StatusTemporaryRedirect, ExpectedStrValue: expectedURL},
+		{Name: "method GET -> not found", Method: http.MethodGet, Path: "http://localhost:8080/123", ExpectedStatusCode: http.StatusNotFound, ExpectedStrValue: ""},
+		{Name: "method GET -> redirect", Method: http.MethodGet, Path: "http://localhost:8080/9fae3719b30b1794910a21beefc7f375", ExpectedStatusCode: http.StatusTemporaryRedirect, ExpectedStrValue: expectedURL},
 	}
-	// action
+	// act
 	for _, testCase := range testCases {
 		t.Run(testCase.Name, func(t *testing.T) {
 			req := httptest.NewRequest(testCase.Method, testCase.Path, nil)
 			recorder := httptest.NewRecorder()
-			rootGETHandler(recorder, req)
+			router.ServeHTTP(recorder, req)
 
 			// assert
 			assert.Equal(t, testCase.ExpectedStatusCode, recorder.Code)
