@@ -1,7 +1,6 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -40,7 +39,7 @@ func (DB *DBConfig) String() string {
 func (DB *DBConfig) Set(s string) error {
 	params := strings.Split(s, ":")
 	if len(s) < 5 {
-		return errors.New(fmt.Sprintf("invalid db config format: %s, example: host:port:database:username:password", s))
+		return fmt.Errorf("invalid db config format: %s, example: host:port:database:username:password", s)
 	}
 
 	DB.Host = params[0]
