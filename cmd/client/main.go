@@ -17,7 +17,8 @@ func main() {
 	reader := bufio.NewReader(os.Stdin)
 	long, err := reader.ReadString('\n')
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error reading input: %s", err)
+		os.Exit(1)
 	}
 	long = strings.TrimSuffix(long, "\n")
 	data.Set("url", long)
