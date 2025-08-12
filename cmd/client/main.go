@@ -24,22 +24,25 @@ func main() {
 	data.Set("url", long)
 	client := &http.Client{}
 
-	req, err := http.NewRequest("POST", endpoint, strings.NewReader(data.Encode()))
+	req, err := http.NewRequest(http.MethodPost, endpoint, strings.NewReader(data.Encode()))
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error creating request: %s\r\n", err)
+		os.Exit(1)
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error executing request: %s\r\n", err)
+		os.Exit(1)
 	}
 	defer closeOnly(resp.Body)
 
 	fmt.Printf("Response status [%v]\r\n", resp.Status)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error reading response body: %s\r\n", err)
+		os.Exit(1)
 	}
 	defer closeOnly(resp.Body)
 	fmt.Printf("Body [%v]", string(body))
@@ -48,6 +51,6 @@ func main() {
 func closeOnly(closer io.Closer) {
 	err := closer.Close()
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error closing reader: %s\r\n", err)
 	}
 }
