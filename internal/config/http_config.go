@@ -13,26 +13,6 @@ type HTTPConfig struct {
 	Port   int    `json:"port"`
 }
 
-func (hc *HTTPConfig) String() string {
-	return fmt.Sprintf("%s:%v", hc.Host, hc.Port)
-}
-
-func (hc *HTTPConfig) Set(s string) error {
-	temp := s
-	params := strings.Split(temp, ":")
-	if len(params) != 2 {
-		return errors.New("invalid http config format, example: localhost:8080")
-	}
-	hc.Host = params[0]
-	var err error
-	hc.Port, err = strconv.Atoi(params[1])
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func NewHTTPConfig(schema string, host string, port int) *HTTPConfig {
 	return &HTTPConfig{
 		Schema: schema,
@@ -41,6 +21,29 @@ func NewHTTPConfig(schema string, host string, port int) *HTTPConfig {
 	}
 }
 
-func (hc *HTTPConfig) GetHost() string {
+func DefaultHTTPConfig() *HTTPConfig {
+	return NewHTTPConfig(DefaultHTTPSchema, DefaultHTTPHost, DefaultHTTPPort)
+}
+
+func (hc *HTTPConfig) GetListenerAddr() string {
 	return hc.Host + ":" + strconv.Itoa(hc.Port)
 }
+
+// flag.Value ==================================
+func (hc *HTTPConfig) String() string {
+	return fmt.Sprintf("%s:%v", hc.Host, hc.Port)
+}
+
+func (hc *HTTPConfig) Set(s string) error {
+	params := strings.Split(s, ":")
+	if len(params) < 2 {
+		return errors.New(fmt.Sprintf("invalid http config format [%s], example: localhost:8080", s))
+	}
+
+	hc.Host = params[0]
+	hc.Port, _ = strconv.Atoi(params[1])
+
+	return nil
+}
+
+// =============================================

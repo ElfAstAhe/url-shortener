@@ -47,7 +47,7 @@ func buildModel() *_model.ShortURI {
 
 func TestShorterService_store_shouldReturnKey(t *testing.T) {
 	t.Run("should return key", func(t *testing.T) {
-		actual, err := NewShorterServiceWithParams(&repoMock{}).Store(ExpectedOriginalURL)
+		actual, err := NewShorterService(&repoMock{}).Store(ExpectedOriginalURL)
 
 		assert.NoError(t, err)
 		assert.Equal(t, ExpectedKey, actual)
@@ -56,7 +56,7 @@ func TestShorterService_store_shouldReturnKey(t *testing.T) {
 
 func TestNewShorterService_getDataExists_shouldReturnURL(t *testing.T) {
 	t.Run("should return URL", func(t *testing.T) {
-		actual, err := NewShorterServiceWithParams(&repoMock{}).GetURL(ExpectedKey)
+		actual, err := NewShorterService(&repoMock{}).GetURL(ExpectedKey)
 
 		assert.NoError(t, err)
 		assert.Equal(t, ExpectedOriginalURL, actual)
@@ -66,7 +66,7 @@ func TestNewShorterService_getDataExists_shouldReturnURL(t *testing.T) {
 
 func TestNewShorterService_getDataNotExists_shouldReturnEmpty(t *testing.T) {
 	t.Run("should return empty", func(t *testing.T) {
-		actual, err := NewShorterServiceWithParams(&repoMock{}).GetURL("22")
+		actual, err := NewShorterService(&repoMock{}).GetURL("22")
 
 		assert.NoError(t, err)
 		assert.Equal(t, "", actual)

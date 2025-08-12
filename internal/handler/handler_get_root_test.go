@@ -5,13 +5,17 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	_srv "github.com/ElfAstAhe/url-shortener/internal/service"
+	"github.com/ElfAstAhe/url-shortener/internal/config"
 	"github.com/ElfAstAhe/url-shortener/pkg/test"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRootHandler_getMethod_emptyKey_shouldReturnBadRequest(t *testing.T) {
 	// prepare
+	if config.AppConfig == nil {
+		config.AppConfig = config.NewConfig()
+		config.AppConfig.LoadConfig()
+	}
 	router := BuildRouter()
 	// test cases
 	cases := []test.HTTPTestCase{
@@ -32,8 +36,12 @@ func TestRootHandler_getMethod_emptyKey_shouldReturnBadRequest(t *testing.T) {
 
 func TestRootHandler_getMethod_success(t *testing.T) {
 	// prepare
+	if config.AppConfig == nil {
+		config.AppConfig = config.NewConfig()
+		config.AppConfig.LoadConfig()
+	}
 	expectedURL := "http://localhost/test/data"
-	_, _ = _srv.NewShorterService().Store(expectedURL)
+	_, _ = createService().Store(expectedURL)
 	router := BuildRouter()
 	// test cases
 	testCases := []test.HTTPTestCase{

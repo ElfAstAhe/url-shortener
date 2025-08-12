@@ -1,22 +1,19 @@
 package service
 
 import (
-	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
-	_repos "github.com/ElfAstAhe/url-shortener/internal/repository"
+	_repo "github.com/ElfAstAhe/url-shortener/internal/repository"
 	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
 )
 
 type Shorter struct {
-	Repository _repos.ShortURIRepository
+	Repository _repo.ShortURIRepository
 }
 
-func NewShorterService() *Shorter {
-	return NewShorterServiceWithParams(_repos.NewShortURIRepository(&_cfg.GlobalConfig.DB))
-}
-
-func NewShorterServiceWithParams(repo _repos.ShortURIRepository) *Shorter {
-	return &Shorter{Repository: repo}
+func NewShorterService(repo _repo.ShortURIRepository) ShorterService {
+	return &Shorter{
+		Repository: repo,
+	}
 }
 
 func (s Shorter) GetURL(key string) (string, error) {

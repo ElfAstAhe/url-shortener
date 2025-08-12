@@ -3,7 +3,6 @@ package handler
 import (
 	"net/http"
 
-	_srv "github.com/ElfAstAhe/url-shortener/internal/service"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -14,7 +13,7 @@ func rootGETHandler(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	fullURL, err := _srv.NewShorterService().GetURL(key)
+	fullURL, err := createService().GetURL(key)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 

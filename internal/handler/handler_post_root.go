@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
-	_srv "github.com/ElfAstAhe/url-shortener/internal/service"
 	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
 )
 
@@ -21,13 +20,13 @@ func rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 
 	// store data
 	var key string
-	key, err = _srv.NewShorterService().Store(string(data))
+	key, err = createService().Store(string(data))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	// prepare outcome data
-	newURI := _utl.BuildNewURI(_cfg.GlobalConfig.BaseURL, key)
+	newURI := _utl.BuildNewURI(_cfg.AppConfig.BaseURL, key)
 
 	// outcome data
 	w.Header().Set("Content-Type", "text/plain")

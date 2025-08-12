@@ -11,13 +11,13 @@ type ShortURIRepository interface {
 	Create(shortURI *_model.ShortURI) (*_model.ShortURI, error)
 }
 
-func NewShortURIRepository(dbConfig *_cfg.DBConfig) ShortURIRepository {
+func NewShortURIRepository(dbKind string, dbConfig *_cfg.DBConfig) ShortURIRepository {
 	// check in future (for next dev iteration)
-	if dbConfig == nil || dbConfig.Kind == _cfg.DBKindInMemory {
-		return NewShortURIInMemRepo()
-	} else if dbConfig.Kind == _cfg.DBKindPostgres {
-		return NewShortURIInMemRepo()
+	if dbKind == "" || dbKind == _cfg.DefaultDBKind {
+		return NewShortURIInMemRepo(dbKind, dbConfig)
+	} else if dbKind == _cfg.DBKindPostgres {
+		return NewShortURIInMemRepo(dbKind, dbConfig)
 	}
 
-	return NewShortURIInMemRepo()
+	return NewShortURIInMemRepo(dbKind, dbConfig)
 }

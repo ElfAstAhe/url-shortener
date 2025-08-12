@@ -1,17 +1,22 @@
 package repository
 
 import (
+	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
 	_db "github.com/ElfAstAhe/url-shortener/internal/config/db"
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
 )
 
 type shortURIInMemRepo struct {
-	DB *_db.InMemoryDB
+	DBKind   string
+	DBConfig *_cfg.DBConfig
+	DB       *_db.InMemoryDB
 }
 
-func NewShortURIInMemRepo() ShortURIRepository {
+func NewShortURIInMemRepo(dbKind string, dbConfig *_cfg.DBConfig) ShortURIRepository {
 	return &shortURIInMemRepo{
-		DB: _db.InMemoryDBInstance,
+		DBKind:   dbKind,
+		DBConfig: dbConfig,
+		DB:       _db.InMemoryDBInstance,
 	}
 }
 
