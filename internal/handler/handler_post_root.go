@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
+	_helper "github.com/ElfAstAhe/url-shortener/internal/handler/helper"
 	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
 )
 
@@ -20,7 +21,7 @@ func rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 
 	// store data
 	var key string
-	key, err = createService().Store(string(data))
+	key, err = _helper.CreateService().Store(string(data))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

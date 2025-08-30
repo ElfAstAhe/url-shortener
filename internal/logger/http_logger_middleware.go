@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func CustomHInfoHTTPLogger(nextHandler http.Handler) http.Handler {
+func CustomInfoHTTPLogger(nextHandler http.Handler) http.Handler {
 	fn := func(rw http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
