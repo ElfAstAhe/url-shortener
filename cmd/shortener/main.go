@@ -7,6 +7,7 @@ import (
 
 	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
 	_hnd "github.com/ElfAstAhe/url-shortener/internal/handler"
+	_log "github.com/ElfAstAhe/url-shortener/internal/logger"
 )
 
 func main() {
@@ -14,6 +15,13 @@ func main() {
 	_cfg.AppConfig = _cfg.NewConfig()
 	if err := _cfg.AppConfig.LoadConfig(); err != nil {
 		fmt.Println("Error loading config:", err)
+
+		os.Exit(1)
+	}
+
+	fmt.Println("Initializing logger...")
+	if err := _log.Initialize(_cfg.AppConfig.LogLevel, _cfg.AppConfig.ProjectStage); err != nil {
+		fmt.Println("Error initializing logger:", err)
 
 		os.Exit(1)
 	}
