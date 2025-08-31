@@ -4,7 +4,8 @@ import (
 	"time"
 
 	_api "github.com/ElfAstAhe/url-shortener/internal/handler/api"
-	_log "github.com/ElfAstAhe/url-shortener/internal/logger"
+	_compress "github.com/ElfAstAhe/url-shortener/internal/handler/middleware/compress"
+	_log "github.com/ElfAstAhe/url-shortener/internal/handler/middleware/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -14,6 +15,7 @@ func BuildRouter() chi.Router {
 
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
+	router.Use(_compress.CustomHTTPCompress)
 	router.Use(_log.CustomInfoHTTPLogger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Timeout(60 * time.Second))

@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	_log "github.com/ElfAstAhe/url-shortener/internal/logger"
 )
 
 func CustomInfoHTTPLogger(nextHandler http.Handler) http.Handler {
@@ -16,7 +18,7 @@ func CustomInfoHTTPLogger(nextHandler http.Handler) http.Handler {
 
 		duration := time.Since(start)
 
-		Log.Sugar().Infof("uri [%s] method [%s] duration [%v] status [%v] size [%v]",
+		_log.Log.Sugar().Infof("uri [%s] method [%s] duration [%v]ms status [%v] size [%v]",
 			r.RequestURI, r.Method, strconv.FormatInt(duration.Milliseconds(), 10),
 			lrw.info.StatusCode, lrw.info.Size)
 	}
