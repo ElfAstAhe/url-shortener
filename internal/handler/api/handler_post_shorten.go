@@ -24,6 +24,14 @@ func ShortenPostHandler(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if request.URL == "" {
+		message := fmt.Sprintf("Empty URL: [%s]", request)
+		log.Warn(message)
+		http.Error(rw, message, http.StatusBadRequest)
+
+		return
+	}
+
 	key, err := _helper.CreateService().Store(request.URL)
 	if err != nil {
 		message := fmt.Sprintf("Error storing URL [%s]", err)
