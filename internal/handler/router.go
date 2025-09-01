@@ -15,9 +15,8 @@ func BuildRouter() chi.Router {
 
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
-	//    router.Use(middleware.Compress(5))
 	router.Use(_compress.CustomCompress(_compress.DefaultCompressionLevel, _compress.ContentTypeApplicationJSON, _compress.ContentTypeTextHTML))
-	//    router.Use(middleware.Logger)
+	router.Use(_compress.CustomDecompress)
 	router.Use(_log.CustomInfoHTTPLogger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Timeout(60 * time.Second))

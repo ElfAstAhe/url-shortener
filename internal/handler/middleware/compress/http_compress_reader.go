@@ -1,34 +1,22 @@
 package compress
 
 import (
+	"compress/flate"
 	"compress/gzip"
 	"compress/lzw"
-	"compress/zlib"
 	"fmt"
 	"io"
 
 	"github.com/andybalholm/brotli"
 )
 
-type customBrotliReadCloser struct {
-	*brotli.Reader
-}
-
-func (cbrc *customBrotliReadCloser) Read(p []byte) (n int, err error) {
-	return cbrc.Reader.Read(p)
-}
-
-func (cbrc *customBrotliReadCloser) Close() error {
-	return nil
-}
-
 type CustomReader struct {
 	SourceReader   io.ReadCloser
-	CompressReader io.ReadCloser
+	CompressReader io.Reader
 }
 
 func NewCustomReader(source io.ReadCloser, encoding string) (*CustomReader, error) {
-	compressReader, err := getCompressReader(encoding, source)
+	compressReader, err := getDecompressReader(encoding, source)
 	if err != nil {
 		return nil, err
 	}
@@ -48,21 +36,26 @@ func (cr *CustomReader) Close() error {
 	if err != nil {
 		return err
 	}
+	if rc, ok := cr.CompressReader.(io.Closer); ok {
+		return rc.Close()
+	}
 
-	return cr.SourceReader.Close()
+	return nil
 }
 
-func getCompressReader(encoding string, reader io.Reader) (io.ReadCloser, error) {
+func getDecompressReader(encoding string, reader io.Reader) (io.Reader, error) {
 	switch encoding {
 	case encodingGzip:
 		return gzip.NewReader(reader)
+	//	case encodingDeflate:
+	//		return zlib.NewReader(reader)
 	case encodingDeflate:
-		return zlib.NewReader(reader)
+		return flate.NewReader(reader), nil
 	case encodingCompress:
 		return lzw.NewReader(reader, lzw.LSB, 8), nil
 	case encodingBrotli:
-		return &customBrotliReadCloser{Reader: brotli.NewReader(reader)}, nil
+		return brotli.NewReader(reader), nil
 	}
 
-	return nil, fmt.Errorf("unknown compress encoding: %s", encoding)
+	return nil, fmt.Errorf("unknown decompress encoding: %s", encoding)
 }
