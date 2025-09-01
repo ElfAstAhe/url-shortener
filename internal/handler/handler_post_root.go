@@ -5,8 +5,8 @@ import (
 	"io"
 	"net/http"
 
-	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
-	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
+	_helper "github.com/ElfAstAhe/url-shortener/internal/handler/helper"
+	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
 )
 
 func rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
@@ -16,22 +16,31 @@ func rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 	data, err = io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
+		return
 	}
 
 	// store data
 	var key string
-	key, err = createService().Store(string(data))
+	key, err = _helper.CreateService().Store(string(data))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
 	}
 
 	// prepare outcome data
-	newURI := _utl.BuildNewURI(_cfg.AppConfig.BaseURL, key)
+	newURI, err := _mapper.ResponseFromKey(key)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
 
 	// outcome data
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write([]byte(newURI))
+	_, err = w.Write([]byte(newURI.Result))
 	if err != nil {
 		fmt.Printf("error writing response [%s]", err.Error())
 
