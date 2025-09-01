@@ -1,9 +1,12 @@
 package compress
 
+// DefaultCompressionLevel Default compression level
+const DefaultCompressionLevel = 5
+
 // Content-Type
 const (
-	contentTypeApplicationJSON = "application/json"
-	contentTypeTextHTML        = "text/html"
+	ContentTypeApplicationJSON = "application/json"
+	ContentTypeTextHTML        = "text/html"
 )
 
 // Accept-Encoding, Content-Encoding
