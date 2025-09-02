@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/ElfAstAhe/url-shortener/internal/config"
+	"github.com/ElfAstAhe/url-shortener/internal/handler/helper"
 	"github.com/ElfAstAhe/url-shortener/pkg/test"
 	"github.com/stretchr/testify/assert"
 )
@@ -41,7 +42,7 @@ func TestRootHandler_getMethod_success(t *testing.T) {
 		config.AppConfig.LoadConfig()
 	}
 	expectedURL := "http://localhost/test/data"
-	_, _ = createService().Store(expectedURL)
+	_, _ = helper.CreateService().Store(expectedURL)
 	router := BuildRouter()
 	// test cases
 	testCases := []test.HTTPTestCase{

@@ -10,11 +10,11 @@ const DBKindInMemory string = "IN_MEMORY"
 const DBKindPostgres string = "POSTGRES"
 
 type DBConfig struct {
-	Host     string `json:"host"`
-	Port     int    `json:"port"`
-	Database string `json:"database"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Host     string `json:"host,omitempty"`
+	Port     int    `json:"port,omitempty"`
+	Database string `json:"database,omitempty"`
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
 }
 
 func NewDBConfig(host string, port int, database string, username string, password string) *DBConfig {

@@ -9,10 +9,10 @@ import (
 
 type ShortURI struct {
 	//
-	ID          string  `db:"id"`
-	OriginalURL url.URL `db:"original_url"`
-	Key         string  `db:"key"`
-	TechData
+	ID          string  `db:"id" json:"id"`
+	OriginalURL url.URL `db:"original_url" json:"original_url"`
+	Key         string  `db:"key" json:"key"`
+	TechData    `json:"tech_data,omitempty"`
 }
 
 func NewShortURI(originalURL string, key string) (*ShortURI, error) {
