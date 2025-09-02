@@ -10,49 +10,49 @@ import (
 	"go.uber.org/zap"
 )
 
-type ShortUrlStorageReader struct {
+type ShortURLStorageReader struct {
 	File   *os.File
 	Reader *bufio.Scanner
 	log    *zap.SugaredLogger
 }
 
-func NewShortUrlStorageReader(storagePath string) (*ShortUrlStorageReader, error) {
+func NewShortURLStorageReader(storagePath string) (*ShortURLStorageReader, error) {
 	storage, err := os.OpenFile(storagePath, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ShortUrlStorageReader{
+	return &ShortURLStorageReader{
 		File:   storage,
 		Reader: bufio.NewScanner(storage),
 		log:    _log.Log.Sugar(),
 	}, nil
 }
 
-type ShortUrlStorageWriter struct {
+type ShortURLStorageWriter struct {
 	File   *os.File
 	Writer *bufio.Writer
 	log    *zap.SugaredLogger
 }
 
-func NewShortUrlStorageWriter(storagePath string) (*ShortUrlStorageWriter, error) {
+func NewShortURLStorageWriter(storagePath string) (*ShortURLStorageWriter, error) {
 	storage, err := os.OpenFile(storagePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ShortUrlStorageWriter{
+	return &ShortURLStorageWriter{
 		File:   storage,
 		Writer: bufio.NewWriter(storage),
 		log:    _log.Log.Sugar(),
 	}, nil
 }
 
-func (r *ShortUrlStorageReader) Close() error {
+func (r *ShortURLStorageReader) Close() error {
 	return r.File.Close()
 }
 
-func (r *ShortUrlStorageReader) LoadData(cache map[string]*_model.ShortURI) error {
+func (r *ShortURLStorageReader) LoadData(cache map[string]*_model.ShortURI) error {
 	clear(cache)
 	for r.Reader.Scan() {
 		data := r.Reader.Bytes()
@@ -70,11 +70,11 @@ func (r *ShortUrlStorageReader) LoadData(cache map[string]*_model.ShortURI) erro
 	return nil
 }
 
-func (w *ShortUrlStorageWriter) Close() error {
+func (w *ShortURLStorageWriter) Close() error {
 	return w.File.Close()
 }
 
-func (w *ShortUrlStorageWriter) SaveData(cache map[string]*_model.ShortURI) error {
+func (w *ShortURLStorageWriter) SaveData(cache map[string]*_model.ShortURI) error {
 	for id, shortURL := range cache {
 		w.log.Infof("Saving short URI %s to %s", id, w.File.Name())
 		data, err := json.Marshal(shortURL)
@@ -90,7 +90,7 @@ func (w *ShortUrlStorageWriter) SaveData(cache map[string]*_model.ShortURI) erro
 	return nil
 }
 
-func (w *ShortUrlStorageWriter) writeLine(data []byte, id string) error {
+func (w *ShortURLStorageWriter) writeLine(data []byte, id string) error {
 	if _, err := w.Writer.Write(data); err != nil {
 		w.log.Warnf("Failed to write short URI id [%s]", id)
 

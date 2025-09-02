@@ -79,7 +79,7 @@ func (app *App) gracefulShutdown() {
 }
 
 func loadShortURIData(storagePath string) error {
-	storageReader, err := _storage.NewShortUrlStorageReader(storagePath)
+	storageReader, err := _storage.NewShortURLStorageReader(storagePath)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func loadShortURIData(storagePath string) error {
 }
 
 func saveShortURIData(storagePath string) error {
-	storageWriter, err := _storage.NewShortUrlStorageWriter(storagePath)
+	storageWriter, err := _storage.NewShortURLStorageWriter(storagePath)
 	if err != nil {
 		return err
 	}
