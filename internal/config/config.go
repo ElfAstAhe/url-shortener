@@ -37,8 +37,9 @@ const (
 	FlagLogLevel      = "l"
 	FlagBaseURL       = "b"
 	FlagDBKind        = "k"
-	FlagHTTPInterface = "ep"
-	FlagDBInterface   = "db"
+	FlagHTTPInterface = "a"
+	FlagDBInterface   = "d"
+	FlagStoragePath   = "f"
 )
 
 // Environment variables
@@ -137,4 +138,5 @@ func (c *Config) initFlags() {
 	flag.StringVar(&c.DBKind, FlagDBKind, DefaultDBKind, "db kind")
 	flag.Var(c.HTTP, FlagHTTPInterface, "http interface")
 	flag.Var(c.DB, FlagDBInterface, "db interface")
+	flag.StringVar(&c.StoragePath, FlagStoragePath, DefaultStoragePath, "storage path")
 }
