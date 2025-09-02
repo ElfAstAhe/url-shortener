@@ -83,6 +83,7 @@ func loadShortURIData(storagePath string) error {
 	if err != nil {
 		return err
 	}
+	defer storageReader.Close()
 
 	return storageReader.LoadData(_db.InMemoryDBInstance.ShortURI)
 }
@@ -92,6 +93,7 @@ func saveShortURIData(storagePath string) error {
 	if err != nil {
 		return err
 	}
+	defer storageWriter.Close()
 
 	return storageWriter.SaveData(_db.InMemoryDBInstance.ShortURI)
 }
