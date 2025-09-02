@@ -20,14 +20,33 @@ import (
 )
 
 type Config struct {
-	AppName      string      `json:"app_name"`
-	ProjectStage string      `json:"project_stage"`
-	LogLevel     string      `json:"log_level"`
-	BaseURL      string      `json:"base_url" env:"BASE_URL"`
-	HTTP         *HTTPConfig `json:"http"`
-	DBKind       string      `json:"db_kind"`
-	DB           *DBConfig   `json:"db"`
+	AppName      string      `json:"app_name,omitempty"`
+	ProjectStage string      `json:"project_stage,omitempty"`
+	LogLevel     string      `json:"log_level,omitempty"`
+	BaseURL      string      `json:"base_url,omitempty" env:"BASE_URL"`
+	HTTP         *HTTPConfig `json:"http,omitempty"`
+	DBKind       string      `json:"db_kind,omitempty"`
+	DB           *DBConfig   `json:"db,omitempty"`
+	StoragePath  string      `json:"storage_path,omitempty" env:"FILE_STORAGE_PATH"`
 }
+
+// Flags
+const (
+	FlagAppName       = "p"
+	FlagProjectStage  = "s"
+	FlagLogLevel      = "l"
+	FlagBaseURL       = "b"
+	FlagDBKind        = "k"
+	FlagHTTPInterface = "ep"
+	FlagDBInterface   = "db"
+)
+
+// Environment variables
+const (
+	EnvBaseURL         = "BASE_URL"
+	EnvHTTPInterface   = "SERVER_ADDR"
+	EnvStorageFilename = "FILE_STORAGE_PATH"
+)
 
 var AppConfig *Config
 
@@ -39,7 +58,7 @@ func NewConfig() *Config {
 	return cfg
 }
 
-func newConfig(appName string, projectStage string, logLevel string, baseURL string, HTTP *HTTPConfig, DBKind string, DB *DBConfig) *Config {
+func newConfig(appName string, projectStage string, logLevel string, baseURL string, HTTP *HTTPConfig, DBKind string, DB *DBConfig, storagePath string) *Config {
 	return &Config{
 		AppName:      appName,
 		ProjectStage: projectStage,
@@ -48,11 +67,12 @@ func newConfig(appName string, projectStage string, logLevel string, baseURL str
 		HTTP:         HTTP,
 		DBKind:       DBKind,
 		DB:           DB,
+		StoragePath:  storagePath,
 	}
 }
 
 func defaultConfig() *Config {
-	return newConfig(DefaultAppName, DefaultStage, DefaultLogLevel, DefaultBaseURL, DefaultHTTPConfig(), DefaultDBKind, DefaultDBConfig())
+	return newConfig(DefaultAppName, DefaultStage, DefaultLogLevel, DefaultBaseURL, DefaultHTTPConfig(), DefaultDBKind, DefaultDBConfig(), DefaultStoragePath)
 }
 
 func (c *Config) LoadConfig() error {
@@ -85,7 +105,7 @@ func (c *Config) loadEnv() error {
 		return err
 	}
 
-	err = parseFlag("SERVER_ADDRESS", c.HTTP)
+	err = parseFlag(EnvHTTPInterface, c.HTTP)
 	if err != nil {
 		return err
 	}
@@ -110,11 +130,11 @@ func parseFlag(env string, value flag.Value) error {
 }
 
 func (c *Config) initFlags() {
-	flag.StringVar(&c.AppName, "p", DefaultAppName, "application name")
-	flag.StringVar(&c.ProjectStage, "s", ProjectStageDevelopment, "project stage")
-	flag.StringVar(&c.LogLevel, "l", zap.InfoLevel.CapitalString(), "log level")
-	flag.StringVar(&c.BaseURL, "b", DefaultBaseURL, "base url")
-	flag.StringVar(&c.DBKind, "db", DefaultDBKind, "db kind")
-	flag.Var(c.HTTP, "a", "http interface")
-	flag.Var(c.DB, "d", "db interface")
+	flag.StringVar(&c.AppName, FlagAppName, DefaultAppName, "application name")
+	flag.StringVar(&c.ProjectStage, FlagProjectStage, ProjectStageDevelopment, "project stage")
+	flag.StringVar(&c.LogLevel, FlagLogLevel, zap.InfoLevel.CapitalString(), "log level")
+	flag.StringVar(&c.BaseURL, FlagBaseURL, DefaultBaseURL, "base url")
+	flag.StringVar(&c.DBKind, FlagDBKind, DefaultDBKind, "db kind")
+	flag.Var(c.HTTP, FlagHTTPInterface, "http interface")
+	flag.Var(c.DB, FlagDBInterface, "db interface")
 }

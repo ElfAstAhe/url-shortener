@@ -18,3 +18,5 @@ const DefaultDBPort = -1
 const DefaultDBDatabase = ""
 const DefaultDBUsername = ""
 const DefaultDBPassword = ""
+
+const DefaultStoragePath = "./shortener.txt"

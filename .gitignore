@@ -23,3 +23,5 @@ vendor/
 .idea
 .vscode
 /shortener
+/shortener.txt
+/cmd/shortener/shortener.txt
