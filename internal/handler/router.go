@@ -22,8 +22,15 @@ func BuildRouter() chi.Router {
 	router.Use(middleware.Timeout(60 * time.Second))
 
 	// root routing
-	router.Get("/{key}", rootGETHandler) // GET   /{key}
-	router.Post("/", rootPOSTHandler)    // POST  /
+	router.Route("/", func(r chi.Router) {
+		r.Get("/{key}", rootGETHandler) // GET   /{key}
+		r.Post("/", rootPOSTHandler)    // POST  /
+	})
+
+	// ping sub router
+	router.Route("/ping", func(r chi.Router) {
+		r.Get("/", pingGetHandler) // GET /ping
+	})
 
 	// api sub router
 	router.Route("/api", func(r chi.Router) {

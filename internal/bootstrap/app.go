@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,6 +19,7 @@ import (
 
 type App struct {
 	Router chi.Router
+	DB     _db.DB
 	log    *zap.SugaredLogger
 }
 
@@ -39,10 +41,21 @@ func (app *App) Init() error {
 
 	app.log = _log.Log.Sugar()
 
-	app.log.Info("Load data from storage...")
-	if err := loadShortURIData(_cfg.AppConfig.StoragePath); err != nil {
-		app.log.Errorf("Error loading data: [%v]", err)
-		app.log.Warn("Using empty data storage")
+	app.log.Info("Initializing database...")
+	db, err := _db.NewDB(_cfg.AppConfig.DBKind, _cfg.AppConfig.DB)
+	if err != nil {
+		app.log.Errorf("Failed to initialize database: [%v]", err)
+		return err
+	}
+	app.DB = db
+
+	// Load cache data
+	if cache, ok := app.DB.(_db.InMemoryCache); ok {
+		app.log.Info("Load data from storage...")
+		if err := app.loadShortURIData(_cfg.AppConfig.StoragePath, cache); err != nil {
+			app.log.Errorf("Error loading data: [%v]", err)
+			app.log.Warn("Using empty data storage")
+		}
 	}
 
 	app.log.Info("Initializing http server router...")
@@ -73,27 +86,35 @@ func (app *App) gracefulShutdown() {
 	// awaiting signal
 	<-sig
 
-	if err := saveShortURIData(_cfg.AppConfig.StoragePath); err != nil {
-		app.log.Errorf("Error save shortURI data: [%v]", err)
+	if cache, ok := app.DB.(_db.InMemoryCache); ok {
+		if err := app.saveShortURIData(_cfg.AppConfig.StoragePath, cache); err != nil {
+			app.log.Errorf("Error save shortURI data: [%v]", err)
+		}
+	}
+
+	if closer, ok := app.DB.(io.Closer); ok {
+		if err := closer.Close(); err != nil {
+			app.log.Errorf("Error closing database: [%v]", err)
+		}
 	}
 }
 
-func loadShortURIData(storagePath string) error {
+func (app *App) loadShortURIData(storagePath string, cache _db.InMemoryCache) error {
 	storageReader, err := _storage.NewShortURLStorageReader(storagePath)
 	if err != nil {
 		return err
 	}
 	defer storageReader.Close()
 
-	return storageReader.LoadData(_db.InMemoryDBInstance.ShortURI)
+	return storageReader.LoadData(cache.GetShortURICache())
 }
 
-func saveShortURIData(storagePath string) error {
+func (app *App) saveShortURIData(storagePath string, cache _db.InMemoryCache) error {
 	storageWriter, err := _storage.NewShortURLStorageWriter(storagePath)
 	if err != nil {
 		return err
 	}
 	defer storageWriter.Close()
 
-	return storageWriter.SaveData(_db.InMemoryDBInstance.ShortURI)
+	return storageWriter.SaveData(cache.GetShortURICache())
 }
