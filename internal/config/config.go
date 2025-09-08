@@ -47,6 +47,7 @@ const (
 	EnvBaseURL         = "BASE_URL"
 	EnvHTTPInterface   = "SERVER_ADDR"
 	EnvStorageFilename = "FILE_STORAGE_PATH"
+	EnvDatabaseDSN     = "DATABASE_DSN"
 )
 
 var AppConfig *Config
@@ -107,6 +108,11 @@ func (c *Config) loadEnv() error {
 	}
 
 	err = parseFlag(EnvHTTPInterface, c.HTTP)
+	if err != nil {
+		return err
+	}
+
+	err = parseFlag(EnvDatabaseDSN, c.DB)
 	if err != nil {
 		return err
 	}
