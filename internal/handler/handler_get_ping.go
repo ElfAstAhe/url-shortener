@@ -10,12 +10,14 @@ import (
 )
 
 func (ar *AppRouter) pingGetHandler(w http.ResponseWriter, r *http.Request) {
-	db, err := _db.NewDB(_cfg.DBKindPostgres, _cfg.AppConfig.DB)
+	db, err := _db.NewPGGap(_cfg.AppConfig.DB)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
 		return
 	}
+	defer _db.CloseDB(db)
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
 	defer cancel()
 

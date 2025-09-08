@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type postgresqlDB struct {
@@ -32,6 +34,19 @@ func newPostgresqlDB(kind string, config *_cfg.DBConfig) (*postgresqlDB, error) 
 	}
 
 	return pgDB, nil
+}
+
+func NewPGGap(config *_cfg.DBConfig) (DB, error) {
+	pg, err := sql.Open("pgx", buildDSN(config))
+	if err != nil {
+		return nil, err
+	}
+
+	return &postgresqlDB{
+		DB:     pg,
+		DBKind: _cfg.DBKindPostgres,
+		Config: config,
+	}, nil
 }
 
 // Closer

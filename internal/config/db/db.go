@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"io"
 
 	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
 )
@@ -18,4 +19,12 @@ func NewDB(kind string, config *_cfg.DBConfig) (DB, error) {
 	}
 
 	return newInMemoryDB(_cfg.DBKindInMemory, config)
+}
+
+func CloseDB(db DB) error {
+	if closer, ok := db.(io.Closer); ok {
+		return closer.Close()
+	}
+
+	return nil
 }
