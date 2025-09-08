@@ -6,9 +6,10 @@ import (
 	"testing"
 
 	"github.com/ElfAstAhe/url-shortener/internal/config"
-	"github.com/ElfAstAhe/url-shortener/internal/handler/helper"
 	"github.com/ElfAstAhe/url-shortener/pkg/test"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestRootHandler_getMethod_emptyKey_shouldReturnBadRequest(t *testing.T) {
@@ -17,7 +18,7 @@ func TestRootHandler_getMethod_emptyKey_shouldReturnBadRequest(t *testing.T) {
 		config.AppConfig = config.NewConfig()
 		config.AppConfig.LoadConfig()
 	}
-	router := BuildRouter()
+	router := NewRouter(config.AppConfig, zap.NewNop().Sugar())
 	// test cases
 	cases := []test.HTTPTestCase{
 		{Name: "method GET path /", Method: http.MethodGet, Path: "/", ExpectedStatusCode: http.StatusMethodNotAllowed},
@@ -28,7 +29,7 @@ func TestRootHandler_getMethod_emptyKey_shouldReturnBadRequest(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			req := httptest.NewRequest(testCase.Method, testCase.Path, nil)
 			recorder := httptest.NewRecorder()
-			router.ServeHTTP(recorder, req)
+			router.Router.ServeHTTP(recorder, req)
 
 			assert.Equal(t, testCase.ExpectedStatusCode, recorder.Code)
 		})
@@ -42,8 +43,10 @@ func TestRootHandler_getMethod_success(t *testing.T) {
 		config.AppConfig.LoadConfig()
 	}
 	expectedURL := "http://localhost/test/data"
-	_, _ = helper.CreateService().Store(expectedURL)
-	router := BuildRouter()
+	router := NewRouter(config.AppConfig, zap.NewNop().Sugar())
+	var service, _ = router.createShortenService()
+	_, err := service.Store(expectedURL)
+	require.NoError(t, err)
 	// test cases
 	testCases := []test.HTTPTestCase{
 		{Name: "method GET -> not found", Method: http.MethodGet, Path: "http://localhost:8080/123", ExpectedStatusCode: http.StatusNotFound, ExpectedStrValue: ""},
@@ -54,7 +57,7 @@ func TestRootHandler_getMethod_success(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			req := httptest.NewRequest(testCase.Method, testCase.Path, nil)
 			recorder := httptest.NewRecorder()
-			router.ServeHTTP(recorder, req)
+			router.Router.ServeHTTP(recorder, req)
 
 			// assert
 			assert.Equal(t, testCase.ExpectedStatusCode, recorder.Code)

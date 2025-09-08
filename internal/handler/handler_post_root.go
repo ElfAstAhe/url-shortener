@@ -5,11 +5,10 @@ import (
 	"io"
 	"net/http"
 
-	_helper "github.com/ElfAstAhe/url-shortener/internal/handler/helper"
 	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
 )
 
-func rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
+func (ar *AppRouter) rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 	var data []byte
 	var err error
 	// read income data
@@ -20,9 +19,16 @@ func rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	service, err := ar.createShortenService()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+
 	// store data
 	var key string
-	key, err = _helper.CreateService().Store(string(data))
+	key, err = service.Store(string(data))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 

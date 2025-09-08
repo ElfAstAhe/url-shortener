@@ -1,4 +1,4 @@
-package api
+package handler
 
 import (
 	"encoding/json"
@@ -6,12 +6,11 @@ import (
 	"net/http"
 
 	_dto "github.com/ElfAstAhe/url-shortener/internal/handler/dto"
-	_helper "github.com/ElfAstAhe/url-shortener/internal/handler/helper"
 	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
 	_log "github.com/ElfAstAhe/url-shortener/internal/logger"
 )
 
-func ShortenPostHandler(rw http.ResponseWriter, r *http.Request) {
+func (ar *AppRouter) shortenPostHandler(rw http.ResponseWriter, r *http.Request) {
 	log := _log.Log.Sugar()
 	dec := json.NewDecoder(r.Body)
 	var request _dto.ShortenCreateRequest
@@ -32,7 +31,15 @@ func ShortenPostHandler(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	key, err := _helper.CreateService().Store(request.URL)
+	service, err := ar.createShortenService()
+	if err != nil {
+		message := fmt.Sprintf("Error creating shorten service: [%s]", request)
+		log.Error(message)
+		http.Error(rw, message, http.StatusInternalServerError)
+
+		return
+	}
+	key, err := service.Store(request.URL)
 	if err != nil {
 		message := fmt.Sprintf("Error storing URL [%s]", err)
 		log.Error(message)

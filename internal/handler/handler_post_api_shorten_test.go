@@ -11,6 +11,7 @@ import (
 	"github.com/ElfAstAhe/url-shortener/internal/handler/dto"
 	"github.com/ElfAstAhe/url-shortener/pkg/test"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestShortenPostHandler_DataCorrect_ShouldSuccess(t *testing.T) {
@@ -19,7 +20,7 @@ func TestShortenPostHandler_DataCorrect_ShouldSuccess(t *testing.T) {
 		config.AppConfig = config.NewConfig()
 		config.AppConfig.LoadConfig()
 	}
-	router := BuildRouter()
+	router := NewRouter(config.AppConfig, zap.NewNop().Sugar())
 	income := dto.ShortenCreateRequest{
 		URL: "http://localhost/test/data",
 	}
@@ -27,7 +28,7 @@ func TestShortenPostHandler_DataCorrect_ShouldSuccess(t *testing.T) {
 	t.Run("", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewBuffer(incomeJSON))
 		recorder := httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
+		router.Router.ServeHTTP(recorder, req)
 
 		// assert
 		assert.Equal(t, http.StatusCreated, recorder.Code)
@@ -40,7 +41,7 @@ func TestShortenPostHandler_DataIncorrect_ShouldFail(t *testing.T) {
 		config.AppConfig = config.NewConfig()
 		config.AppConfig.LoadConfig()
 	}
-	router := BuildRouter()
+	router := NewRouter(config.AppConfig, zap.NewNop().Sugar())
 	income := dto.ShortenCreateRequest{
 		URL: "",
 	}
@@ -59,7 +60,7 @@ func TestShortenPostHandler_DataIncorrect_ShouldFail(t *testing.T) {
 				t.Fatal(err)
 			}
 			recorder := httptest.NewRecorder()
-			router.ServeHTTP(recorder, req)
+			router.Router.ServeHTTP(recorder, req)
 
 			// assert
 			assert.Equal(t, tc.ExpectedStatusCode, recorder.Code)

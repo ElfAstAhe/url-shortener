@@ -14,7 +14,7 @@ const ExpectedOriginalURL = "http://localhost:8080/test/data"
 const ExpectedKey = "8fe59a11923ca3ea1b7118818e3a7b3c"
 const ExpectedID = "123"
 
-func (r repoMock) GetByID(id string) (*_model.ShortURI, error) {
+func (r repoMock) Get(id string) (*_model.ShortURI, error) {
 	data := buildModel()
 	if data.ID == id {
 		return data, nil

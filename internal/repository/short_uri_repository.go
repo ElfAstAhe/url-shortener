@@ -2,22 +2,20 @@ package repository
 
 import (
 	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
+	_db "github.com/ElfAstAhe/url-shortener/internal/config/db"
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
 )
 
 type ShortURIRepository interface {
-	GetByID(id string) (*_model.ShortURI, error)
+	Get(id string) (*_model.ShortURI, error)
 	GetByKey(key string) (*_model.ShortURI, error)
 	Create(shortURI *_model.ShortURI) (*_model.ShortURI, error)
 }
 
-func NewShortURIRepository(dbKind string, dbConfig *_cfg.DBConfig) ShortURIRepository {
-	// check in future (for next dev iteration)
-	if dbKind == "" || dbKind == _cfg.DefaultDBKind {
-		return NewShortURIInMemRepo(dbKind, dbConfig)
-	} else if dbKind == _cfg.DBKindPostgres {
-		return NewShortURIInMemRepo(dbKind, dbConfig)
+func NewShortURIRepository(db _db.DB) (ShortURIRepository, error) {
+	if db != nil && db.GetDBKind() == _cfg.DBKindPostgres {
+		return newShortURIPgRepo(db)
 	}
 
-	return NewShortURIInMemRepo(dbKind, dbConfig)
+	return newShortURIInMemRepo(db)
 }

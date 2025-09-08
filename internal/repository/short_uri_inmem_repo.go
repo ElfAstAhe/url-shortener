@@ -1,27 +1,28 @@
 package repository
 
 import (
-	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
+	"errors"
+
 	_db "github.com/ElfAstAhe/url-shortener/internal/config/db"
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
 )
 
 type shortURIInMemRepo struct {
-	DBKind   string
-	DBConfig *_cfg.DBConfig
-	DB       *_db.InMemoryDB
+	Cache _db.InMemoryCache
 }
 
-func NewShortURIInMemRepo(dbKind string, dbConfig *_cfg.DBConfig) ShortURIRepository {
-	return &shortURIInMemRepo{
-		DBKind:   dbKind,
-		DBConfig: dbConfig,
-		DB:       _db.InMemoryDBInstance,
+func newShortURIInMemRepo(db _db.DB) (ShortURIRepository, error) {
+	if cache, ok := db.(_db.InMemoryCache); ok {
+		return &shortURIInMemRepo{
+			Cache: cache,
+		}, nil
 	}
+
+	return nil, errors.New("db param does not implement InMemoryCache")
 }
 
-func (r *shortURIInMemRepo) GetByID(id string) (*_model.ShortURI, error) {
-	for _, value := range r.DB.ShortURI {
+func (r *shortURIInMemRepo) Get(id string) (*_model.ShortURI, error) {
+	for _, value := range r.Cache.GetShortURICache() {
 		if value.ID == id {
 			return value, nil
 		}
@@ -31,7 +32,7 @@ func (r *shortURIInMemRepo) GetByID(id string) (*_model.ShortURI, error) {
 }
 
 func (r *shortURIInMemRepo) GetByKey(key string) (*_model.ShortURI, error) {
-	res := r.DB.ShortURI[key]
+	res := r.Cache.GetShortURICache()[key]
 
 	return res, nil
 }
@@ -45,7 +46,7 @@ func (r *shortURIInMemRepo) Create(shortURI *_model.ShortURI) (*_model.ShortURI,
 		return founded, nil
 	}
 
-	r.DB.ShortURI[shortURI.Key] = shortURI
+	r.Cache.GetShortURICache()[shortURI.Key] = shortURI
 
 	return shortURI, nil
 }

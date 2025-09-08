@@ -2,6 +2,7 @@ package model
 
 import (
 	"net/url"
+	"time"
 
 	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
 	"github.com/google/uuid"
@@ -16,22 +17,31 @@ type ShortURI struct {
 }
 
 func NewShortURI(originalURL string, key string) (*ShortURI, error) {
-	return NewShortURIFull(uuid.New().String(), originalURL, key)
+	return NewShortURIFull(uuid.New().String(), originalURL, key, &TechData{
+		CreateUser: "unknown",
+		Created:    time.Now(),
+		UpdateUser: "unknown",
+		Updated:    time.Now(),
+	})
 }
 
-func NewShortURIFull(ID string, originalURL string, key string) (*ShortURI, error) {
+func NewShortURIFull(ID string, originalURL string, key string, techData *TechData) (*ShortURI, error) {
 	origURL, err := url.Parse(originalURL)
 	if err != nil {
 		return nil, _err.NewInvalidOriginalURLError(originalURL)
 	}
 
-	return NewShortURIComplete(ID, origURL, key), nil
+	return NewShortURIComplete(ID, origURL, key, techData), nil
 }
 
-func NewShortURIComplete(ID string, origURL *url.URL, key string) *ShortURI {
+func NewShortURIComplete(ID string,
+	origURL *url.URL,
+	key string,
+	techData *TechData) *ShortURI {
 	return &ShortURI{
 		ID:          ID,
 		OriginalURL: *origURL,
 		Key:         key,
+		TechData:    *techData,
 	}
 }

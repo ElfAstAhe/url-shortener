@@ -13,14 +13,13 @@ import (
 	_hnd "github.com/ElfAstAhe/url-shortener/internal/handler"
 	_log "github.com/ElfAstAhe/url-shortener/internal/logger"
 	_storage "github.com/ElfAstAhe/url-shortener/internal/storage"
-	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
 
 type App struct {
-	Router chi.Router
-	DB     _db.DB
-	log    *zap.SugaredLogger
+	AppRouter *_hnd.AppRouter
+	DB        _db.DB
+	log       *zap.SugaredLogger
 }
 
 func NewApp() (*App, error) {
@@ -59,7 +58,7 @@ func (app *App) Init() error {
 	}
 
 	app.log.Info("Initializing http server router...")
-	app.Router = _hnd.BuildRouter()
+	app.AppRouter = _hnd.NewRouter(_cfg.AppConfig, _log.Log.Sugar())
 
 	return nil
 }
@@ -69,7 +68,7 @@ func (app *App) Run() error {
 	go app.gracefulShutdown()
 
 	app.log.Info("Starting server...")
-	if err := http.ListenAndServe(_cfg.AppConfig.HTTP.GetListenerAddr(), app.Router); err != nil {
+	if err := http.ListenAndServe(_cfg.AppConfig.HTTP.GetListenerAddr(), app.AppRouter.Router); err != nil {
 		app.log.Errorf("Error starting server with error [%v]", err)
 
 		os.Exit(1)
@@ -97,6 +96,8 @@ func (app *App) gracefulShutdown() {
 			app.log.Errorf("Error closing database: [%v]", err)
 		}
 	}
+
+	os.Exit(0)
 }
 
 func (app *App) loadShortURIData(storagePath string, cache _db.InMemoryCache) error {

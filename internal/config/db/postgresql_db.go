@@ -13,17 +13,25 @@ type postgresqlDB struct {
 	Config *_cfg.DBConfig
 }
 
+var pgDB *postgresqlDB
+
 func newPostgresqlDB(kind string, config *_cfg.DBConfig) (*postgresqlDB, error) {
+	if pgDB != nil {
+		return pgDB, nil
+	}
+
 	pg, err := sql.Open("pgx", buildDSN(config))
 	if err != nil {
 		return nil, err
 	}
 
-	return &postgresqlDB{
+	pgDB = &postgresqlDB{
 		DB:     pg,
 		DBKind: kind,
 		Config: config,
-	}, nil
+	}
+
+	return pgDB, nil
 }
 
 // Closer

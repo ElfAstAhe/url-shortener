@@ -13,12 +13,20 @@ type inMemoryDB struct {
 	Config   *_cfg.DBConfig
 }
 
+var inMemDB *inMemoryDB
+
 func newInMemoryDB(kind string, config *_cfg.DBConfig) (*inMemoryDB, error) {
-	return &inMemoryDB{
+	if inMemDB != nil {
+		return inMemDB, nil
+	}
+
+	inMemDB = &inMemoryDB{
 		ShortURI: make(map[string]*_model.ShortURI),
 		DBKind:   kind,
 		Config:   config,
-	}, nil
+	}
+
+	return inMemDB, nil
 }
 
 // Closer

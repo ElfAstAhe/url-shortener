@@ -10,13 +10,15 @@ type Shorter struct {
 	Repository _repo.ShortURIRepository
 }
 
-func NewShorterService(repo _repo.ShortURIRepository) ShorterService {
+func NewShorterService(repo _repo.ShortURIRepository) (ShorterService, error) {
 	return &Shorter{
 		Repository: repo,
-	}
+	}, nil
 }
 
-func (s Shorter) GetURL(key string) (string, error) {
+// ShorterService
+
+func (s *Shorter) GetURL(key string) (string, error) {
 	model, err := s.Repository.GetByKey(key)
 	if err != nil {
 		return "", err
@@ -28,7 +30,7 @@ func (s Shorter) GetURL(key string) (string, error) {
 	return model.OriginalURL.String(), nil
 }
 
-func (s Shorter) Store(url string) (string, error) {
+func (s *Shorter) Store(url string) (string, error) {
 	key := _utl.EncodeURIStr(url)
 	model, err := _model.NewShortURI(url, key)
 	if err != nil {
@@ -42,3 +44,5 @@ func (s Shorter) Store(url string) (string, error) {
 
 	return model.Key, nil
 }
+
+// ================

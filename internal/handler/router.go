@@ -3,42 +3,53 @@ package handler
 import (
 	"time"
 
-	_api "github.com/ElfAstAhe/url-shortener/internal/handler/api"
+	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
 	_compress "github.com/ElfAstAhe/url-shortener/internal/handler/middleware/compress"
 	_log "github.com/ElfAstAhe/url-shortener/internal/handler/middleware/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"go.uber.org/zap"
 )
 
-func BuildRouter() chi.Router {
-	router := chi.NewRouter()
+type AppRouter struct {
+	Router *chi.Mux
+	config *_cfg.Config
+	log    *zap.SugaredLogger
+}
 
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(_compress.CustomCompress(_compress.DefaultCompressionLevel, _compress.ContentTypeApplicationJSON, _compress.ContentTypeTextHTML))
-	router.Use(_compress.CustomDecompress)
-	router.Use(_log.CustomInfoHTTPLogger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
+func NewRouter(config *_cfg.Config, logger *zap.SugaredLogger) *AppRouter {
+	appRouter := &AppRouter{
+		Router: chi.NewRouter(),
+		config: config,
+		log:    logger,
+	}
+
+	appRouter.Router.Use(middleware.RequestID)
+	appRouter.Router.Use(middleware.RealIP)
+	appRouter.Router.Use(_compress.CustomCompress(_compress.DefaultCompressionLevel, _compress.ContentTypeApplicationJSON, _compress.ContentTypeTextHTML))
+	appRouter.Router.Use(_compress.CustomDecompress)
+	appRouter.Router.Use(_log.CustomInfoHTTPLogger)
+	appRouter.Router.Use(middleware.Recoverer)
+	appRouter.Router.Use(middleware.Timeout(60 * time.Second))
 
 	// root routing
-	router.Route("/", func(r chi.Router) {
-		r.Get("/{key}", rootGETHandler) // GET   /{key}
-		r.Post("/", rootPOSTHandler)    // POST  /
+	appRouter.Router.Route("/", func(r chi.Router) {
+		r.Get("/{key}", appRouter.rootGETHandler) // GET   /{key}
+		r.Post("/", appRouter.rootPOSTHandler)    // POST  /
 	})
 
 	// ping sub router
-	router.Route("/ping", func(r chi.Router) {
-		r.Get("/", pingGetHandler) // GET /ping
+	appRouter.Router.Route("/ping", func(r chi.Router) {
+		r.Get("/", appRouter.pingGetHandler) // GET /ping
 	})
 
 	// api sub router
-	router.Route("/api", func(r chi.Router) {
+	appRouter.Router.Route("/api", func(r chi.Router) {
 		// shorten resource sub router
 		r.Route("/shorten", func(r chi.Router) {
-			r.Post("/", _api.ShortenPostHandler) // POST  /api/shorten
+			r.Post("/", appRouter.shortenPostHandler) // POST  /api/shorten
 		})
 	})
 
-	return router
+	return appRouter
 }
