@@ -2,9 +2,11 @@ package service
 
 import (
 	"testing"
+	"time"
 
-	_model "github.com/ElfAstAhe/url-shortener/internal/model"
+	"github.com/ElfAstAhe/url-shortener/internal/model"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type repoMock struct {
@@ -14,7 +16,7 @@ const ExpectedOriginalURL = "http://localhost:8080/test/data"
 const ExpectedKey = "8fe59a11923ca3ea1b7118818e3a7b3c"
 const ExpectedID = "123"
 
-func (r repoMock) Get(id string) (*_model.ShortURI, error) {
+func (r repoMock) Get(id string) (*model.ShortURI, error) {
 	data := buildModel()
 	if data.ID == id {
 		return data, nil
@@ -23,7 +25,7 @@ func (r repoMock) Get(id string) (*_model.ShortURI, error) {
 	return nil, nil
 }
 
-func (r repoMock) GetByKey(key string) (*_model.ShortURI, error) {
+func (r repoMock) GetByKey(key string) (*model.ShortURI, error) {
 	data := buildModel()
 	if data.Key == key {
 		return data, nil
@@ -31,23 +33,31 @@ func (r repoMock) GetByKey(key string) (*_model.ShortURI, error) {
 	return nil, nil
 }
 
-func (r repoMock) Create(shortURI *_model.ShortURI) (*_model.ShortURI, error) {
+func (r repoMock) Create(shortURI *model.ShortURI) (*model.ShortURI, error) {
 	if shortURI == nil {
 		return nil, nil
 	}
 
-	return _model.NewShortURI(shortURI.OriginalURL.String(), shortURI.Key)
+	return model.NewShortURI(shortURI.OriginalURL.String(), shortURI.Key)
 }
 
-func buildModel() *_model.ShortURI {
-	data, _ := _model.NewShortURIFull(ExpectedID, ExpectedOriginalURL, ExpectedKey)
+func buildModel() *model.ShortURI {
+	techData := model.TechData{
+		CreateUser: "unknown",
+		Created:    time.Now(),
+		UpdateUser: "unknown",
+		Updated:    time.Now(),
+	}
+	data, _ := model.NewShortURIFull(ExpectedID, ExpectedOriginalURL, ExpectedKey, &techData)
 
 	return data
 }
 
 func TestShorterService_store_shouldReturnKey(t *testing.T) {
 	t.Run("should return key", func(t *testing.T) {
-		actual, err := NewShorterService(&repoMock{}).Store(ExpectedOriginalURL)
+		service, err := NewShorterService(&repoMock{})
+		require.NoError(t, err)
+		actual, err := service.Store(ExpectedOriginalURL)
 
 		assert.NoError(t, err)
 		assert.Equal(t, ExpectedKey, actual)
@@ -56,7 +66,9 @@ func TestShorterService_store_shouldReturnKey(t *testing.T) {
 
 func TestNewShorterService_getDataExists_shouldReturnURL(t *testing.T) {
 	t.Run("should return URL", func(t *testing.T) {
-		actual, err := NewShorterService(&repoMock{}).GetURL(ExpectedKey)
+		service, err := NewShorterService(&repoMock{})
+		require.NoError(t, err)
+		actual, err := service.GetURL(ExpectedKey)
 
 		assert.NoError(t, err)
 		assert.Equal(t, ExpectedOriginalURL, actual)
@@ -66,7 +78,9 @@ func TestNewShorterService_getDataExists_shouldReturnURL(t *testing.T) {
 
 func TestNewShorterService_getDataNotExists_shouldReturnEmpty(t *testing.T) {
 	t.Run("should return empty", func(t *testing.T) {
-		actual, err := NewShorterService(&repoMock{}).GetURL("22")
+		service, err := NewShorterService(&repoMock{})
+		require.NoError(t, err)
+		actual, err := service.GetURL("22")
 
 		assert.NoError(t, err)
 		assert.Equal(t, "", actual)
