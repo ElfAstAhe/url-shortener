@@ -128,6 +128,8 @@ func parseFlag(env string, value flag.Value) error {
 		return nil
 	}
 
+	fmt.Printf("[DEBUG] Config: ENV [%s] VALUE [%+v]\r\n", env, value)
+
 	err := value.Set(envVar)
 	if err != nil {
 		return err
