@@ -29,7 +29,7 @@ func TestRootHandler_getMethod_emptyKey_shouldReturnBadRequest(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			req := httptest.NewRequest(testCase.Method, testCase.Path, nil)
 			recorder := httptest.NewRecorder()
-			router.Router.ServeHTTP(recorder, req)
+			router.GetRouter().ServeHTTP(recorder, req)
 
 			assert.Equal(t, testCase.ExpectedStatusCode, recorder.Code)
 		})
@@ -44,7 +44,9 @@ func TestRootHandler_getMethod_success(t *testing.T) {
 	}
 	expectedURL := "http://localhost/test/data"
 	router := NewRouter(config.AppConfig, zap.NewNop().Sugar())
-	var service, _ = router.createShortenService()
+	chiRouter, ok := router.(*chiRouter)
+	require.True(t, ok)
+	var service, _ = chiRouter.createShortenService()
 	_, err := service.Store(expectedURL)
 	require.NoError(t, err)
 	// test cases
@@ -57,7 +59,7 @@ func TestRootHandler_getMethod_success(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			req := httptest.NewRequest(testCase.Method, testCase.Path, nil)
 			recorder := httptest.NewRecorder()
-			router.Router.ServeHTTP(recorder, req)
+			router.GetRouter().ServeHTTP(recorder, req)
 
 			// assert
 			assert.Equal(t, testCase.ExpectedStatusCode, recorder.Code)
