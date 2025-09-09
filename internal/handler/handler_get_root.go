@@ -6,14 +6,14 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func (ar *AppRouter) rootGETHandler(w http.ResponseWriter, r *http.Request) {
+func (cr *chiRouter) rootGETHandler(w http.ResponseWriter, r *http.Request) {
 	key := chi.URLParam(r, "key")
 	if key == "" {
 		http.Error(w, "No key applied: example [http://localhost:8080/{key}]", http.StatusBadRequest)
 
 		return
 	}
-	service, err := ar.createShortenService()
+	service, err := cr.createShortenService()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 

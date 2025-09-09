@@ -2,7 +2,6 @@ package bootstrap
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -17,7 +16,7 @@ import (
 )
 
 type App struct {
-	AppRouter *_hnd.AppRouter
+	AppRouter _hnd.AppRouter
 	DB        _db.DB
 	log       *zap.SugaredLogger
 }
@@ -41,7 +40,7 @@ func (app *App) Init() error {
 	app.log = _log.Log.Sugar()
 
 	app.log.Info("Initializing database...")
-	db, err := _db.NewDB(_cfg.AppConfig.DBKind, _cfg.AppConfig.DB)
+	db, err := _db.NewDB(_cfg.AppConfig.DBKind, _cfg.AppConfig.DBDsn)
 	if err != nil {
 		app.log.Errorf("Failed to initialize database: [%v]", err)
 		return err
@@ -68,7 +67,7 @@ func (app *App) Run() error {
 	go app.gracefulShutdown()
 
 	app.log.Info("Starting server...")
-	if err := http.ListenAndServe(_cfg.AppConfig.HTTP.GetListenerAddr(), app.AppRouter.Router); err != nil {
+	if err := http.ListenAndServe(_cfg.AppConfig.HTTP.GetListenerAddr(), app.AppRouter.GetRouter()); err != nil {
 		app.log.Errorf("Error starting server with error [%v]", err)
 
 		os.Exit(1)
@@ -91,10 +90,8 @@ func (app *App) gracefulShutdown() {
 		}
 	}
 
-	if closer, ok := app.DB.(io.Closer); ok {
-		if err := closer.Close(); err != nil {
-			app.log.Errorf("Error closing database: [%v]", err)
-		}
+	if err := _db.CloseDB(app.DB); err != nil {
+		app.log.Errorf("Error closing database: [%v]", err)
 	}
 
 	os.Exit(0)

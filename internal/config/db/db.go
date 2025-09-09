@@ -10,15 +10,15 @@ import (
 type DB interface {
 	GetDB() *sql.DB
 	GetDBKind() string
-	GetConfig() *_cfg.DBConfig
+	GetDsn() string
 }
 
-func NewDB(kind string, config *_cfg.DBConfig) (DB, error) {
+func NewDB(kind string, dsn string) (DB, error) {
 	if kind == _cfg.DBKindPostgres {
-		return newPostgresqlDB(kind, config)
+		return newPostgresqlDB(kind, dsn)
 	}
 
-	return newInMemoryDB(_cfg.DBKindInMemory, config)
+	return newInMemoryDB(_cfg.DBKindInMemory)
 }
 
 func CloseDB(db DB) error {

@@ -8,7 +8,7 @@ import (
 	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
 )
 
-func (ar *AppRouter) rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
+func (cr *chiRouter) rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 	var data []byte
 	var err error
 	// read income data
@@ -19,7 +19,7 @@ func (ar *AppRouter) rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service, err := ar.createShortenService()
+	service, err := cr.createShortenService()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 

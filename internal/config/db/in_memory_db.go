@@ -3,19 +3,17 @@ package db
 import (
 	"database/sql"
 
-	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
 )
 
 type inMemoryDB struct {
 	ShortURI map[string]*_model.ShortURI
 	DBKind   string
-	Config   *_cfg.DBConfig
 }
 
 var inMemDB *inMemoryDB
 
-func newInMemoryDB(kind string, config *_cfg.DBConfig) (*inMemoryDB, error) {
+func newInMemoryDB(kind string) (*inMemoryDB, error) {
 	if inMemDB != nil {
 		return inMemDB, nil
 	}
@@ -23,7 +21,6 @@ func newInMemoryDB(kind string, config *_cfg.DBConfig) (*inMemoryDB, error) {
 	inMemDB = &inMemoryDB{
 		ShortURI: make(map[string]*_model.ShortURI),
 		DBKind:   kind,
-		Config:   config,
 	}
 
 	return inMemDB, nil
@@ -49,8 +46,8 @@ func (db *inMemoryDB) GetDBKind() string {
 	return db.DBKind
 }
 
-func (db *inMemoryDB) GetConfig() *_cfg.DBConfig {
-	return db.Config
+func (db *inMemoryDB) GetDsn() string {
+	return ""
 }
 
 // ========

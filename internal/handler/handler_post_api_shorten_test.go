@@ -28,7 +28,7 @@ func TestShortenPostHandler_DataCorrect_ShouldSuccess(t *testing.T) {
 	t.Run("", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewBuffer(incomeJSON))
 		recorder := httptest.NewRecorder()
-		router.Router.ServeHTTP(recorder, req)
+		router.GetRouter().ServeHTTP(recorder, req)
 
 		// assert
 		assert.Equal(t, http.StatusCreated, recorder.Code)
@@ -60,7 +60,7 @@ func TestShortenPostHandler_DataIncorrect_ShouldFail(t *testing.T) {
 				t.Fatal(err)
 			}
 			recorder := httptest.NewRecorder()
-			router.Router.ServeHTTP(recorder, req)
+			router.GetRouter().ServeHTTP(recorder, req)
 
 			// assert
 			assert.Equal(t, tc.ExpectedStatusCode, recorder.Code)

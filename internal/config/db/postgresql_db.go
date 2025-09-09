@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 
 	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
 
@@ -12,17 +11,17 @@ import (
 type postgresqlDB struct {
 	DB     *sql.DB
 	DBKind string
-	Config *_cfg.DBConfig
+	Dsn    string
 }
 
 var pgDB *postgresqlDB
 
-func newPostgresqlDB(kind string, config *_cfg.DBConfig) (*postgresqlDB, error) {
+func newPostgresqlDB(kind string, dsn string) (*postgresqlDB, error) {
 	if pgDB != nil {
 		return pgDB, nil
 	}
 
-	pg, err := sql.Open("pgx", buildDSN(config))
+	pg, err := sql.Open("pgx", dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -30,14 +29,14 @@ func newPostgresqlDB(kind string, config *_cfg.DBConfig) (*postgresqlDB, error) 
 	pgDB = &postgresqlDB{
 		DB:     pg,
 		DBKind: kind,
-		Config: config,
+		Dsn:    dsn,
 	}
 
 	return pgDB, nil
 }
 
-func NewPGGap(config *_cfg.DBConfig) (DB, error) {
-	pg, err := sql.Open("pgx", buildDSN(config))
+func NewPGIter10Gap(dsn string) (DB, error) {
+	pg, err := sql.Open("pgx", dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +44,7 @@ func NewPGGap(config *_cfg.DBConfig) (DB, error) {
 	return &postgresqlDB{
 		DB:     pg,
 		DBKind: _cfg.DBKindPostgres,
-		Config: config,
+		Dsn:    dsn,
 	}, nil
 }
 
@@ -67,12 +66,8 @@ func (pDB *postgresqlDB) GetDBKind() string {
 	return pDB.DBKind
 }
 
-func (pDB *postgresqlDB) GetConfig() *_cfg.DBConfig {
-	return pDB.Config
+func (pDB *postgresqlDB) GetDsn() string {
+	return pDB.Dsn
 }
 
 // =============
-
-func buildDSN(config *_cfg.DBConfig) string {
-	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", config.Host, config.Port, config.Username, config.Password, config.Database)
-}

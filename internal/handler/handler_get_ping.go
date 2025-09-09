@@ -1,27 +1,24 @@
 package handler
 
 import (
-	"context"
+	"io"
 	"net/http"
-	"time"
-
-	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
-	_db "github.com/ElfAstAhe/url-shortener/internal/config/db"
 )
 
-func (ar *AppRouter) pingGetHandler(w http.ResponseWriter, r *http.Request) {
-	db, err := _db.NewPGGap(_cfg.AppConfig.DB)
+func (cr *chiRouter) pingGetHandler(w http.ResponseWriter, r *http.Request) {
+	service, err := cr.createDBConnCheckService()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
 		return
 	}
-	defer _db.CloseDB(db)
+	defer func() {
+		if closer, ok := service.(io.Closer); ok {
+			closer.Close()
+		}
+	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
-	defer cancel()
-
-	err = db.GetDB().PingContext(ctx)
+	err = service.CheckDBConn()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 

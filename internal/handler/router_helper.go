@@ -6,8 +6,8 @@ import (
 	_srv "github.com/ElfAstAhe/url-shortener/internal/service"
 )
 
-func (ar *AppRouter) createShortenService() (_srv.ShorterService, error) {
-	db, err := _db.NewDB(ar.config.DBKind, ar.config.DB)
+func (cr *chiRouter) createShortenService() (_srv.ShorterService, error) {
+	db, err := _db.NewDB(cr.config.DBKind, cr.config.DBDsn)
 	if err != nil {
 		return nil, err
 	}
@@ -17,4 +17,13 @@ func (ar *AppRouter) createShortenService() (_srv.ShorterService, error) {
 	}
 
 	return _srv.NewShorterService(repository)
+}
+
+func (cr *chiRouter) createDBConnCheckService() (_repo.DBConnCheckRepository, error) {
+	db, err := _db.NewPGIter10Gap(cr.config.DBDsn)
+	if err != nil {
+		return nil, err
+	}
+
+	return _repo.NewDBConnCheckRepository(db)
 }

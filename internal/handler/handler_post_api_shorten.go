@@ -10,7 +10,7 @@ import (
 	_log "github.com/ElfAstAhe/url-shortener/internal/logger"
 )
 
-func (ar *AppRouter) shortenPostHandler(rw http.ResponseWriter, r *http.Request) {
+func (cr *chiRouter) shortenPostHandler(rw http.ResponseWriter, r *http.Request) {
 	log := _log.Log.Sugar()
 	dec := json.NewDecoder(r.Body)
 	var request _dto.ShortenCreateRequest
@@ -31,7 +31,7 @@ func (ar *AppRouter) shortenPostHandler(rw http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	service, err := ar.createShortenService()
+	service, err := cr.createShortenService()
 	if err != nil {
 		message := fmt.Sprintf("Error creating shorten service: [%s]", request)
 		log.Error(message)

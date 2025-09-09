@@ -12,6 +12,10 @@ type shortURIPgRepo struct {
 }
 
 func newShortURIPgRepo(db _db.DB) (ShortURIRepository, error) {
+	if db == nil {
+		return nil, errors.New("db is nil")
+	}
+
 	return &shortURIPgRepo{db: db}, nil
 }
 

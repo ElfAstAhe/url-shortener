@@ -26,7 +26,7 @@ type Config struct {
 	BaseURL      string      `json:"base_url,omitempty" env:"BASE_URL"`
 	HTTP         *HTTPConfig `json:"http,omitempty"`
 	DBKind       string      `json:"db_kind,omitempty"`
-	DB           *DBConfig   `json:"db,omitempty"`
+	DBDsn        string      `json:"db_dsn,omitempty" env:"DATABASE_DSN"`
 	StoragePath  string      `json:"storage_path,omitempty" env:"FILE_STORAGE_PATH"`
 }
 
@@ -60,7 +60,7 @@ func NewConfig() *Config {
 	return cfg
 }
 
-func newConfig(appName string, projectStage string, logLevel string, baseURL string, HTTP *HTTPConfig, DBKind string, DB *DBConfig, storagePath string) *Config {
+func newConfig(appName string, projectStage string, logLevel string, baseURL string, HTTP *HTTPConfig, DBKind string, DBDsn string, storagePath string) *Config {
 	return &Config{
 		AppName:      appName,
 		ProjectStage: projectStage,
@@ -68,13 +68,13 @@ func newConfig(appName string, projectStage string, logLevel string, baseURL str
 		BaseURL:      baseURL,
 		HTTP:         HTTP,
 		DBKind:       DBKind,
-		DB:           DB,
+		DBDsn:        DBDsn,
 		StoragePath:  storagePath,
 	}
 }
 
 func defaultConfig() *Config {
-	return newConfig(DefaultAppName, DefaultStage, DefaultLogLevel, DefaultBaseURL, DefaultHTTPConfig(), DefaultDBKind, DefaultDBConfig(), DefaultStoragePath)
+	return newConfig(DefaultAppName, DefaultStage, DefaultLogLevel, DefaultBaseURL, DefaultHTTPConfig(), DefaultDBKind, DefaultDBDsn, DefaultStoragePath)
 }
 
 func (c *Config) LoadConfig() error {
@@ -112,11 +112,6 @@ func (c *Config) loadEnv() error {
 		return err
 	}
 
-	err = parseFlag(EnvDatabaseDSN, c.DB)
-	if err != nil {
-		return err
-	}
-
 	fmt.Printf("Config: %+v\r\n", c)
 
 	return nil
@@ -145,6 +140,6 @@ func (c *Config) initFlags() {
 	flag.StringVar(&c.BaseURL, FlagBaseURL, DefaultBaseURL, "base url")
 	flag.StringVar(&c.DBKind, FlagDBKind, DefaultDBKind, "db kind")
 	flag.Var(c.HTTP, FlagHTTPInterface, "http interface")
-	flag.Var(c.DB, FlagDBInterface, "db interface")
+	flag.StringVar(&c.DBDsn, FlagDBInterface, DefaultDBDsn, "database dsn")
 	flag.StringVar(&c.StoragePath, FlagStoragePath, DefaultStoragePath, "storage path")
 }
