@@ -2,6 +2,7 @@ package migrations
 
 import "go.uber.org/zap"
 
+// gooseLogger is implementation of goose.Logger interface
 type gooseLogger struct {
 	log *zap.SugaredLogger
 }

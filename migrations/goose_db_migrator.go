@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// GooseDBMigrator is implementation of DBMigrator interface
 type GooseDBMigrator struct {
 	DB  *sql.DB
 	ctx context.Context
