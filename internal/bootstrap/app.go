@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -12,6 +13,7 @@ import (
 	_hnd "github.com/ElfAstAhe/url-shortener/internal/handler"
 	_log "github.com/ElfAstAhe/url-shortener/internal/logger"
 	_storage "github.com/ElfAstAhe/url-shortener/internal/storage"
+	_migr "github.com/ElfAstAhe/url-shortener/migrations"
 	"go.uber.org/zap"
 )
 
@@ -53,6 +55,24 @@ func (app *App) Init() error {
 		if err := app.loadShortURIData(_cfg.AppConfig.StoragePath, cache); err != nil {
 			app.log.Errorf("Error loading data: [%v]", err)
 			app.log.Warn("Using empty data storage")
+		}
+	}
+
+	// DB migrations
+	if app.DB.GetDBKind() == _cfg.DBKindPostgres {
+		app.log.Info("DB migrations postgres...")
+
+		migrator, err := _migr.NewGooseDBMigrator(context.Background(), app.DB.GetDB(), _log.Log)
+		if err != nil {
+			app.log.Errorf("Error instantiate DB migrator: [%v]", err)
+
+			return err
+		}
+
+		if err := migrator.Up(); err != nil {
+			app.log.Errorf("Error DB migrate up: [%v]", err)
+
+			return err
 		}
 	}
 
