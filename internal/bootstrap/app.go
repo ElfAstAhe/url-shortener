@@ -69,6 +69,12 @@ func (app *App) Init() error {
 			return err
 		}
 
+		if err := migrator.Initialize(); err != nil {
+			app.log.Errorf("Error initializing DB migrator: [%v]", err)
+
+			return err
+		}
+
 		if err := migrator.Up(); err != nil {
 			app.log.Errorf("Error DB migrate up: [%v]", err)
 

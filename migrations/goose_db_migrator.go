@@ -36,7 +36,7 @@ func (g *GooseDBMigrator) Initialize() error {
 }
 
 func (g *GooseDBMigrator) Up() error {
-	return goose.UpContext(g.ctx, g.DB, "", goose.WithAllowMissing())
+	return goose.UpContext(g.ctx, g.DB, ".", goose.WithAllowMissing())
 }
 
 // ==============
