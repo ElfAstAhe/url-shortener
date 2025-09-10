@@ -38,7 +38,7 @@ func (r repoMock) Create(shortURI *model.ShortURI) (*model.ShortURI, error) {
 		return nil, nil
 	}
 
-	return model.NewShortURI(shortURI.OriginalURL.String(), shortURI.Key)
+	return model.NewShortURI(shortURI.OriginalURL.URL.String(), shortURI.Key)
 }
 
 func buildModel() *model.ShortURI {
