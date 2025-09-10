@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	getSql      string = "select id, original_url, key, create_user, created, update_user, updated from short_uris where id = $1"
-	getByKeySql string = "select id, original_url, key, create_user, created, update_user, updated from short_uris where key = $1"
-	createSql   string = "insert into short_uris(id, original_url, key, create_user, created, update_user, updated) values ($1, $2, $3, $4, $5, $6, $7)"
+	getSQL      string = "select id, original_url, key, create_user, created, update_user, updated from short_uris where id = $1"
+	getByKeySQL string = "select id, original_url, key, create_user, created, update_user, updated from short_uris where key = $1"
+	createSQL   string = "insert into short_uris(id, original_url, key, create_user, created, update_user, updated) values ($1, $2, $3, $4, $5, $6, $7)"
 )
 
 type shortURIPgRepo struct {
@@ -28,7 +28,7 @@ func newShortURIPgRepo(db _db.DB) (ShortURIRepository, error) {
 }
 
 func (pgr *shortURIPgRepo) Get(id string) (*_model.ShortURI, error) {
-	row := pgr.db.GetDB().QueryRow(getSql, id)
+	row := pgr.db.GetDB().QueryRow(getSQL, id)
 	if row.Err() != nil && !errors.Is(row.Err(), sql.ErrNoRows) {
 		return nil, nil
 	}
@@ -47,7 +47,7 @@ func (pgr *shortURIPgRepo) Get(id string) (*_model.ShortURI, error) {
 }
 
 func (pgr *shortURIPgRepo) GetByKey(key string) (*_model.ShortURI, error) {
-	row := pgr.db.GetDB().QueryRow(getByKeySql, key)
+	row := pgr.db.GetDB().QueryRow(getByKeySQL, key)
 	if row.Err() != nil && !errors.Is(row.Err(), sql.ErrNoRows) {
 		return nil, nil
 	}
@@ -79,7 +79,7 @@ func (pgr *shortURIPgRepo) Create(shortURI *_model.ShortURI) (*_model.ShortURI, 
 	shortURI.ID = newID.String()
 
 	// id, original_url, key, create_user, created, update_user, updated
-	_, err = pgr.db.GetDB().Exec(createSql, shortURI.ID, shortURI.OriginalURL, shortURI.Key, shortURI.CreateUser, shortURI.Created, shortURI.UpdateUser, shortURI.Updated)
+	_, err = pgr.db.GetDB().Exec(createSQL, shortURI.ID, shortURI.OriginalURL, shortURI.Key, shortURI.CreateUser, shortURI.Created, shortURI.UpdateUser, shortURI.Updated)
 	if err != nil {
 		return nil, err
 	}
