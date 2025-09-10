@@ -27,7 +27,7 @@ func (s *Shorter) GetURL(key string) (string, error) {
 		return "", nil
 	}
 
-	return model.OriginalURL.String(), nil
+	return model.OriginalURL.URL.String(), nil
 }
 
 func (s *Shorter) Store(url string) (string, error) {

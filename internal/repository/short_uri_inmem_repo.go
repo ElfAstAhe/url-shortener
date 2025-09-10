@@ -5,6 +5,7 @@ import (
 
 	_db "github.com/ElfAstAhe/url-shortener/internal/config/db"
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
+	"github.com/google/uuid"
 )
 
 type shortURIInMemRepo struct {
@@ -21,8 +22,8 @@ func newShortURIInMemRepo(db _db.DB) (ShortURIRepository, error) {
 	return nil, errors.New("db param does not implement InMemoryCache")
 }
 
-func (r *shortURIInMemRepo) Get(id string) (*_model.ShortURI, error) {
-	for _, value := range r.Cache.GetShortURICache() {
+func (imr *shortURIInMemRepo) Get(id string) (*_model.ShortURI, error) {
+	for _, value := range imr.Cache.GetShortURICache() {
 		if value.ID == id {
 			return value, nil
 		}
@@ -31,22 +32,27 @@ func (r *shortURIInMemRepo) Get(id string) (*_model.ShortURI, error) {
 	return nil, nil
 }
 
-func (r *shortURIInMemRepo) GetByKey(key string) (*_model.ShortURI, error) {
-	res := r.Cache.GetShortURICache()[key]
+func (imr *shortURIInMemRepo) GetByKey(key string) (*_model.ShortURI, error) {
+	res := imr.Cache.GetShortURICache()[key]
 
 	return res, nil
 }
 
-func (r *shortURIInMemRepo) Create(shortURI *_model.ShortURI) (*_model.ShortURI, error) {
-	founded, err := r.GetByKey(shortURI.Key)
+func (imr *shortURIInMemRepo) Create(shortURI *_model.ShortURI) (*_model.ShortURI, error) {
+	founded, err := imr.GetByKey(shortURI.Key)
 	if err != nil {
 		return nil, err
 	}
 	if founded != nil {
 		return founded, nil
 	}
+	newID, err := uuid.NewRandom()
+	if err != nil {
+		return nil, err
+	}
+	shortURI.ID = newID.String()
 
-	r.Cache.GetShortURICache()[shortURI.Key] = shortURI
+	imr.Cache.GetShortURICache()[shortURI.Key] = shortURI
 
-	return shortURI, nil
+	return imr.GetByKey(shortURI.Key)
 }
