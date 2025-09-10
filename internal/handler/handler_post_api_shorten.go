@@ -48,7 +48,7 @@ func (cr *chiRouter) shortenPostHandler(rw http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	resp, _ := _mapper.ResponseFromKey(key)
+	resp, _ := _mapper.ShortenCreateResponseFromKey(key)
 
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusCreated)

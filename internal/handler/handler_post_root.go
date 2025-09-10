@@ -36,7 +36,7 @@ func (cr *chiRouter) rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// prepare outcome data
-	newURI, err := _mapper.ResponseFromKey(key)
+	newURI, err := _mapper.ShortenCreateResponseFromKey(key)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
