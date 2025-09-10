@@ -9,7 +9,7 @@ const DefaultHTTPSchema = "http"
 const DefaultHTTPHost string = "localhost"
 const DefaultHTTPPort int = 8080
 
-const DefaultDBKind = DBKindInMemory
+const DefaultDBKind = DBKindPostgres
 const DefaultDBDsn = ""
 
 const DefaultStoragePath = "./shortener.txt"

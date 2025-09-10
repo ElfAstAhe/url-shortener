@@ -90,6 +90,10 @@ func (c *Config) LoadConfig() error {
 		return err
 	}
 
+	if c.DBDsn == "" {
+		c.DBKind = DBKindInMemory
+	}
+
 	return nil
 }
 
