@@ -37,9 +37,9 @@ func (cr *chiRouter) shortenPostHandler(rw http.ResponseWriter, r *http.Request)
 
 		return
 	}
-	key, err := service.Store(request.URL)
-	if err != nil {
-		message := fmt.Sprintf("Error storing URL [%s]", err)
+	key, conflictErr := service.Store(request.URL)
+	if conflictErr != nil && key == "" {
+		message := fmt.Sprintf("Error storing URL [%s]", conflictErr)
 		cr.log.Error(message)
 		http.Error(rw, message, http.StatusInternalServerError)
 
@@ -49,7 +49,11 @@ func (cr *chiRouter) shortenPostHandler(rw http.ResponseWriter, r *http.Request)
 	resp, _ := _mapper.ShortenCreateResponseFromKey(key)
 
 	rw.Header().Set("Content-Type", "application/json")
-	rw.WriteHeader(http.StatusCreated)
+	if conflictErr != nil {
+		rw.WriteHeader(http.StatusConflict)
+	} else {
+		rw.WriteHeader(http.StatusCreated)
+	}
 
 	enc := json.NewEncoder(rw)
 	if err := enc.Encode(resp); err != nil {

@@ -39,13 +39,21 @@ func (imr *shortURIInMemRepo) GetByKey(key string) (*_model.ShortURI, error) {
 }
 
 func (imr *shortURIInMemRepo) Create(shortURI *_model.ShortURI) (*_model.ShortURI, error) {
+	if shortURI == nil {
+		return nil, errors.New("shortURI is nil")
+	}
+	if shortURI.Key == "" {
+		return nil, errors.New("shortURI Key is empty")
+	}
+
 	founded, err := imr.GetByKey(shortURI.Key)
 	if err != nil {
 		return nil, err
 	}
 	if founded != nil {
-		return founded, nil
+		return founded, errors.New("short URI already exists")
 	}
+
 	newID, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
@@ -54,7 +62,7 @@ func (imr *shortURIInMemRepo) Create(shortURI *_model.ShortURI) (*_model.ShortUR
 
 	imr.Cache.GetShortURICache()[shortURI.Key] = shortURI
 
-	return imr.GetByKey(shortURI.Key)
+	return shortURI, nil
 }
 
 func (imr *shortURIInMemRepo) BatchCreate(batch map[string]*_model.ShortURI) (map[string]*_model.ShortURI, error) {

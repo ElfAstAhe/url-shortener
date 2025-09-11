@@ -39,8 +39,10 @@ func (s *Shorter) Store(url string) (string, error) {
 	}
 
 	model, err = s.Repository.Create(model)
-	if err != nil {
+	if err != nil && model == nil {
 		return "", err
+	} else if err != nil && model != nil {
+		return model.Key, err
 	}
 
 	return model.Key, nil

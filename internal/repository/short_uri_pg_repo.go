@@ -77,6 +77,15 @@ func (pgr *shortURIPgRepo) Create(shortURI *_model.ShortURI) (*_model.ShortURI, 
 	if shortURI.Key == "" {
 		return nil, errors.New("shortURI Key is empty")
 	}
+
+	find, err := pgr.GetByKey(shortURI.Key)
+	if err != nil {
+		return nil, err
+	}
+	if find != nil {
+		return find, errors.New("shortURI already exists")
+	}
+
 	preparedSQL, err := pgr.db.GetDB().Prepare(createSQL)
 	if err != nil {
 		return nil, err
@@ -88,7 +97,7 @@ func (pgr *shortURIPgRepo) Create(shortURI *_model.ShortURI) (*_model.ShortURI, 
 		return nil, err
 	}
 
-	return pgr.Get(res.ID)
+	return res, nil
 }
 
 // BatchCreate is creation a batch data in transaction

@@ -27,10 +27,9 @@ func (cr *chiRouter) rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// store data
-	var key string
-	key, err = service.Store(string(data))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	key, conflictErr := service.Store(string(data))
+	if conflictErr != nil && key == "" {
+		http.Error(w, conflictErr.Error(), http.StatusInternalServerError)
 
 		return
 	}
@@ -45,7 +44,11 @@ func (cr *chiRouter) rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 
 	// outcome data
 	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusCreated)
+	if conflictErr != nil {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
 	_, err = w.Write([]byte(newURI.Result))
 	if err != nil {
 		fmt.Printf("error writing response [%s]", err.Error())
