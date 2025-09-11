@@ -5,26 +5,18 @@ import (
 	"fmt"
 	"net/http"
 
-	_dto "github.com/ElfAstAhe/url-shortener/internal/handler/dto"
 	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
+	_srv "github.com/ElfAstAhe/url-shortener/internal/service"
 )
 
-func (cr *chiRouter) shortenPostHandler(rw http.ResponseWriter, r *http.Request) {
+func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Request) {
 	dec := json.NewDecoder(r.Body)
-	var request _dto.ShortenCreateRequest
+	var data _srv.CorrelationUrls = make(_srv.CorrelationUrls)
 
-	if err := dec.Decode(&request); err != nil {
+	if err := dec.Decode(&data); err != nil {
 		message := fmt.Sprintf("Error deserializing request JSON body: [%s]", err)
 		cr.log.Error(message)
 		http.Error(rw, message, http.StatusInternalServerError)
-
-		return
-	}
-
-	if request.URL == "" {
-		message := fmt.Sprintf("Empty URL: [%s]", request)
-		cr.log.Warn(message)
-		http.Error(rw, message, http.StatusBadRequest)
 
 		return
 	}
@@ -37,27 +29,36 @@ func (cr *chiRouter) shortenPostHandler(rw http.ResponseWriter, r *http.Request)
 
 		return
 	}
-	key, err := service.Store(request.URL)
+
+	result, err := service.BatchStore(data)
 	if err != nil {
-		message := fmt.Sprintf("Error storing URL [%s]", err)
+		message := fmt.Sprintf("Error processing batch data: [%s]", err)
 		cr.log.Error(message)
 		http.Error(rw, message, http.StatusInternalServerError)
 
 		return
 	}
 
-	resp, _ := _mapper.ShortenCreateResponseFromKey(key)
+	resp, err := _mapper.ShortenBatchResponseFromKeys(result)
+	if err != nil {
+		message := fmt.Sprintf("Error converting batch data: [%s]", err)
+		cr.log.Error(message)
+		http.Error(rw, message, http.StatusInternalServerError)
+
+		return
+	}
 
 	rw.Header().Set("Content-Type", "application/json")
-	rw.WriteHeader(http.StatusCreated)
+	rw.WriteHeader(http.StatusOK)
 
 	enc := json.NewEncoder(rw)
 	if err := enc.Encode(resp); err != nil {
 		message := fmt.Sprintf("Error encoding response as JSON: [%s]", err)
 		cr.log.Error(message)
-
 		http.Error(rw, message, http.StatusInternalServerError)
+
+		return
 	}
 
-	cr.log.Debug("Done creating shorten URL")
+	cr.log.Debug("Done batch")
 }

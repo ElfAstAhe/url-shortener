@@ -45,4 +45,8 @@ func (s *Shorter) Store(url string) (string, error) {
 	return model.Key, nil
 }
 
+func (s *Shorter) BatchStore(source CorrelationUrls) (CorrelationShorts, error) {
+	// ..
+}
+
 // ================
