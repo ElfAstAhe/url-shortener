@@ -58,7 +58,7 @@ func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Req
 	}
 
 	rw.Header().Set("Content-Type", "application/json")
-	rw.WriteHeader(http.StatusOK)
+	rw.WriteHeader(http.StatusCreated)
 
 	enc := json.NewEncoder(rw)
 	if err := enc.Encode(resp); err != nil {
