@@ -120,6 +120,8 @@ func (app *App) gracefulShutdown() {
 		app.log.Errorf("Error closing database: [%v]", err)
 	}
 
+	app.log.Info("Shutting down server done")
+
 	os.Exit(0)
 }
 

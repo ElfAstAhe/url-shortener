@@ -10,6 +10,7 @@ type ShortURIRepository interface {
 	Get(id string) (*_model.ShortURI, error)
 	GetByKey(key string) (*_model.ShortURI, error)
 	Create(shortURI *_model.ShortURI) (*_model.ShortURI, error)
+	BatchCreate(batch map[string]*_model.ShortURI) (map[string]*_model.ShortURI, error)
 }
 
 func NewShortURIRepository(db _db.DB) (ShortURIRepository, error) {

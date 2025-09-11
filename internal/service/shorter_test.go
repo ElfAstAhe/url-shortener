@@ -12,6 +12,11 @@ import (
 type repoMock struct {
 }
 
+func (r repoMock) BatchCreate(batch map[string]*_model.ShortURI) (map[string]*_model.ShortURI, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 const ExpectedOriginalURL = "http://localhost:8080/test/data"
 const ExpectedKey = "8fe59a11923ca3ea1b7118818e3a7b3c"
 const ExpectedID = "123"

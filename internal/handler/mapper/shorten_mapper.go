@@ -26,10 +26,10 @@ func ShortenCreateResponseFromEntity(entity *_model.ShortURI) (*_dto.ShortenCrea
 }
 
 func ShortenBatchResponseFromKeys(source map[string]string) ([]*_dto.ShortenBatchResponseItem, error) {
-	if source == nil {
+	if source == nil || len(source) == 0 {
 		return make([]*_dto.ShortenBatchResponseItem, 0), nil
 	}
-	res := make([]*_dto.ShortenBatchResponseItem, len(source))
+	res := make([]*_dto.ShortenBatchResponseItem, 0)
 	for key, value := range source {
 		res = append(res, &_dto.ShortenBatchResponseItem{
 			CorrelationID: key,
@@ -50,6 +50,19 @@ func ShortenBatchResponseFromEntity(source map[string]*_model.ShortURI) ([]*_dto
 			CorrelationID: key,
 			ShortURL:      _utl.BuildNewURI(_cfg.AppConfig.BaseURL, value.Key),
 		})
+	}
+
+	return res, nil
+}
+
+func ShortenBatchFromDto(source []*_dto.ShortenBatchCreateItem) (map[string]string, error) {
+	res := make(map[string]string)
+	if source == nil || len(source) == 0 {
+		return res, nil
+	}
+
+	for _, item := range source {
+		res[item.CorrelationID] = item.OriginalURL
 	}
 
 	return res, nil

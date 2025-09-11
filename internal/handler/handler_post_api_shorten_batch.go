@@ -5,16 +5,25 @@ import (
 	"fmt"
 	"net/http"
 
+	_dto "github.com/ElfAstAhe/url-shortener/internal/handler/dto"
 	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
-	_srv "github.com/ElfAstAhe/url-shortener/internal/service"
 )
 
 func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Request) {
 	dec := json.NewDecoder(r.Body)
-	var data _srv.CorrelationUrls = make(_srv.CorrelationUrls)
+	var income = make([]*_dto.ShortenBatchCreateItem, 0)
 
-	if err := dec.Decode(&data); err != nil {
+	if err := dec.Decode(&income); err != nil {
 		message := fmt.Sprintf("Error deserializing request JSON body: [%s]", err)
+		cr.log.Error(message)
+		http.Error(rw, message, http.StatusInternalServerError)
+
+		return
+	}
+
+	data, err := _mapper.ShortenBatchFromDto(income)
+	if err != nil {
+		message := fmt.Sprintf("Error map income data into internal structs: [%s]", err)
 		cr.log.Error(message)
 		http.Error(rw, message, http.StatusInternalServerError)
 

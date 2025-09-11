@@ -63,6 +63,11 @@ func (cr *chiRouter) buildRoutes(router *chi.Mux) {
 		// shorten resource sub router
 		r.Route("/shorten", func(r chi.Router) {
 			r.Post("/", cr.shortenPostHandler) // POST  /api/shorten
+
+			// batch sub router
+			r.Route("/batch", func(r chi.Router) {
+				r.Post("/", cr.shortenBatchPostHandler) // POST /api/shorten/batch
+			})
 		})
 	})
 }

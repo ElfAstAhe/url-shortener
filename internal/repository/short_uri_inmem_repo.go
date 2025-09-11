@@ -56,3 +56,32 @@ func (imr *shortURIInMemRepo) Create(shortURI *_model.ShortURI) (*_model.ShortUR
 
 	return imr.GetByKey(shortURI.Key)
 }
+
+func (imr *shortURIInMemRepo) BatchCreate(batch map[string]*_model.ShortURI) (map[string]*_model.ShortURI, error) {
+	if batch == nil || len(batch) == 0 {
+		return batch, nil
+	}
+
+	res := make(map[string]*_model.ShortURI)
+	for correlation, item := range batch {
+		// searching
+		find, err := imr.GetByKey(item.Key)
+		if err != nil {
+			return nil, err
+		}
+		// founded
+		if find != nil {
+			res[correlation] = find
+
+			continue
+		}
+		// new one
+		data, err := imr.Create(item)
+		if err != nil {
+			return nil, err
+		}
+		res[correlation] = data
+	}
+
+	return res, nil
+}

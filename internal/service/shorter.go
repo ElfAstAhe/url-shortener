@@ -1,6 +1,7 @@
 package service
 
 import (
+	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
 	_repo "github.com/ElfAstAhe/url-shortener/internal/repository"
 	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
@@ -46,7 +47,48 @@ func (s *Shorter) Store(url string) (string, error) {
 }
 
 func (s *Shorter) BatchStore(source CorrelationUrls) (CorrelationShorts, error) {
-	// ..
+	if source == nil || len(source) == 0 {
+		return CorrelationShorts{}, nil
+	}
+
+	batch, err := toBatchSource(source)
+	if err != nil {
+		return nil, err
+	}
+
+	batchRes, err := s.Repository.BatchCreate(batch)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := toBatchResult(batchRes)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 // ================
+
+func toBatchSource(source CorrelationUrls) (map[string]*_model.ShortURI, error) {
+	batch := make(map[string]*_model.ShortURI)
+	for correlation, origURL := range source {
+		item, err := _model.NewShortURI(origURL, _utl.EncodeURIStr(origURL))
+		if err != nil {
+			return nil, err
+		}
+		batch[correlation] = item
+	}
+
+	return batch, nil
+}
+
+func toBatchResult(source map[string]*_model.ShortURI) (CorrelationShorts, error) {
+	batch := make(CorrelationShorts)
+	for correlation, shortURL := range source {
+		batch[correlation] = _utl.BuildNewURI(_cfg.AppConfig.BaseURL, shortURL.Key)
+	}
+
+	return batch, nil
+}
