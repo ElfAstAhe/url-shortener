@@ -22,7 +22,7 @@ func TestShortenPostHandler_DataCorrect_ShouldSuccess(t *testing.T) {
 	}
 	router := NewRouter(config.AppConfig, zap.NewNop().Sugar())
 	income := dto.ShortenCreateRequest{
-		URL: "http://localhost/test/data",
+		URL: "http://localhost/test/data/post",
 	}
 	incomeJSON, _ := json.Marshal(income)
 	t.Run("", func(t *testing.T) {

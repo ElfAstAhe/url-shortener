@@ -42,7 +42,7 @@ func TestRootHandler_getMethod_success(t *testing.T) {
 		config.AppConfig = config.NewConfig()
 		config.AppConfig.LoadConfig()
 	}
-	expectedURL := "http://localhost/test/data"
+	expectedURL := "http://localhost/test/data/get"
 	router := NewRouter(config.AppConfig, zap.NewNop().Sugar())
 	chiRouter, ok := router.(*chiRouter)
 	require.True(t, ok)
