@@ -47,7 +47,7 @@ func (s *Shorter) Store(url string) (string, error) {
 }
 
 func (s *Shorter) BatchStore(source CorrelationUrls) (CorrelationShorts, error) {
-	if source == nil || len(source) == 0 {
+	if len(source) == 0 {
 		return CorrelationShorts{}, nil
 	}
 
