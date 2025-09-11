@@ -9,17 +9,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type repoMock struct {
-}
-
-func (r repoMock) BatchCreate(batch map[string]*_model.ShortURI) (map[string]*_model.ShortURI, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 const ExpectedOriginalURL = "http://localhost:8080/test/data"
 const ExpectedKey = "8fe59a11923ca3ea1b7118818e3a7b3c"
 const ExpectedID = "123"
+
+type repoMock struct {
+}
+
+func (r repoMock) BatchCreate(batch map[string]*model.ShortURI) (map[string]*model.ShortURI, error) {
+	return map[string]*model.ShortURI{}, nil
+}
 
 func (r repoMock) Get(id string) (*model.ShortURI, error) {
 	data := buildModel()

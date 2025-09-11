@@ -93,7 +93,7 @@ func (pgr *shortURIPgRepo) Create(shortURI *_model.ShortURI) (*_model.ShortURI, 
 
 // BatchCreate is creation a batch data in transaction
 func (pgr *shortURIPgRepo) BatchCreate(batch map[string]*_model.ShortURI) (map[string]*_model.ShortURI, error) {
-	if batch == nil || len(batch) == 0 {
+	if len(batch) == 0 {
 		return batch, nil
 	}
 

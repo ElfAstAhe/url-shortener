@@ -26,7 +26,7 @@ func ShortenCreateResponseFromEntity(entity *_model.ShortURI) (*_dto.ShortenCrea
 }
 
 func ShortenBatchResponseFromKeys(source map[string]string) ([]*_dto.ShortenBatchResponseItem, error) {
-	if source == nil || len(source) == 0 {
+	if len(source) == 0 {
 		return make([]*_dto.ShortenBatchResponseItem, 0), nil
 	}
 	res := make([]*_dto.ShortenBatchResponseItem, 0)
@@ -41,7 +41,7 @@ func ShortenBatchResponseFromKeys(source map[string]string) ([]*_dto.ShortenBatc
 }
 
 func ShortenBatchResponseFromEntity(source map[string]*_model.ShortURI) ([]*_dto.ShortenBatchResponseItem, error) {
-	if source == nil {
+	if len(source) == 0 {
 		return make([]*_dto.ShortenBatchResponseItem, 0), nil
 	}
 	res := make([]*_dto.ShortenBatchResponseItem, 0, len(source))
@@ -57,7 +57,7 @@ func ShortenBatchResponseFromEntity(source map[string]*_model.ShortURI) ([]*_dto
 
 func ShortenBatchFromDto(source []*_dto.ShortenBatchCreateItem) (map[string]string, error) {
 	res := make(map[string]string)
-	if source == nil || len(source) == 0 {
+	if len(source) == 0 {
 		return res, nil
 	}
 

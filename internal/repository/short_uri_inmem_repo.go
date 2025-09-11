@@ -58,7 +58,7 @@ func (imr *shortURIInMemRepo) Create(shortURI *_model.ShortURI) (*_model.ShortUR
 }
 
 func (imr *shortURIInMemRepo) BatchCreate(batch map[string]*_model.ShortURI) (map[string]*_model.ShortURI, error) {
-	if batch == nil || len(batch) == 0 {
+	if len(batch) == 0 {
 		return batch, nil
 	}
 
