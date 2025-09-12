@@ -4,7 +4,6 @@ import (
 	"database/sql"
 
 	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
-
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -14,28 +13,7 @@ type postgresqlDB struct {
 	Dsn    string
 }
 
-var pgDB *postgresqlDB
-
 func newPostgresqlDB(kind string, dsn string) (*postgresqlDB, error) {
-	if pgDB != nil {
-		return pgDB, nil
-	}
-
-	pg, err := sql.Open("pgx", dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	pgDB = &postgresqlDB{
-		DB:     pg,
-		DBKind: kind,
-		Dsn:    dsn,
-	}
-
-	return pgDB, nil
-}
-
-func NewPGIter10Gap(dsn string) (DB, error) {
 	pg, err := sql.Open("pgx", dsn)
 	if err != nil {
 		return nil, err
@@ -43,9 +21,13 @@ func NewPGIter10Gap(dsn string) (DB, error) {
 
 	return &postgresqlDB{
 		DB:     pg,
-		DBKind: _cfg.DBKindPostgres,
+		DBKind: kind,
 		Dsn:    dsn,
 	}, nil
+}
+
+func NewPGIter10Gap(dsn string) (DB, error) {
+	return newPostgresqlDB(_cfg.DBKindPostgres, dsn)
 }
 
 // Closer
