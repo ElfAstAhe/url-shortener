@@ -5,11 +5,10 @@ import (
 	"io"
 	"net/http"
 
-	_helper "github.com/ElfAstAhe/url-shortener/internal/handler/helper"
 	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
 )
 
-func rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
+func (cr *chiRouter) rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 	var data []byte
 	var err error
 	// read income data
@@ -20,17 +19,23 @@ func rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// store data
-	var key string
-	key, err = _helper.CreateService().Store(string(data))
+	service, err := cr.createShortenService()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
 		return
 	}
 
+	// store data
+	key, conflictErr := service.Store(string(data))
+	if conflictErr != nil && key == "" {
+		http.Error(w, conflictErr.Error(), http.StatusInternalServerError)
+
+		return
+	}
+
 	// prepare outcome data
-	newURI, err := _mapper.ResponseFromKey(key)
+	newURI, err := _mapper.ShortenCreateResponseFromKey(key)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
@@ -39,7 +44,11 @@ func rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 
 	// outcome data
 	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusCreated)
+	if conflictErr != nil {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
 	_, err = w.Write([]byte(newURI.Result))
 	if err != nil {
 		fmt.Printf("error writing response [%s]", err.Error())

@@ -5,6 +5,8 @@ import (
 	"os"
 
 	"github.com/ElfAstAhe/url-shortener/internal/bootstrap"
+
+	_ "github.com/ElfAstAhe/url-shortener/migrations"
 )
 
 func main() {
