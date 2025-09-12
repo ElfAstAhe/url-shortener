@@ -53,12 +53,12 @@ func (s *Shorter) BatchStore(source CorrelationUrls) (CorrelationShorts, error) 
 		return CorrelationShorts{}, nil
 	}
 
-	batch, err := toBatchSource(source)
+	repoBatch, err := toBatchSource(source)
 	if err != nil {
 		return nil, err
 	}
 
-	batchRes, err := s.Repository.BatchCreate(batch)
+	batchRes, err := s.Repository.BatchCreate(repoBatch)
 	if err != nil {
 		return nil, err
 	}

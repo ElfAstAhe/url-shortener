@@ -21,7 +21,7 @@ func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Req
 		return
 	}
 
-	data, err := _mapper.ShortenBatchFromDto(income)
+	serviceBatch, err := _mapper.ShortenBatchFromDto(income)
 	if err != nil {
 		message := fmt.Sprintf("Error map income data into internal structs: [%s]", err)
 		cr.log.Error(message)
@@ -39,7 +39,7 @@ func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Req
 		return
 	}
 
-	result, err := service.BatchStore(data)
+	serviceBatchResult, err := service.BatchStore(serviceBatch)
 	if err != nil {
 		message := fmt.Sprintf("Error processing batch data: [%s]", err)
 		cr.log.Error(message)
@@ -48,7 +48,7 @@ func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Req
 		return
 	}
 
-	resp, err := _mapper.ShortenBatchResponseFromKeys(result)
+	respBatch, err := _mapper.ShortenBatchResponseFromKeys(serviceBatchResult)
 	if err != nil {
 		message := fmt.Sprintf("Error converting batch data: [%s]", err)
 		cr.log.Error(message)
@@ -61,7 +61,7 @@ func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Req
 	rw.WriteHeader(http.StatusCreated)
 
 	enc := json.NewEncoder(rw)
-	if err := enc.Encode(resp); err != nil {
+	if err := enc.Encode(respBatch); err != nil {
 		message := fmt.Sprintf("Error encoding response as JSON: [%s]", err)
 		cr.log.Error(message)
 		http.Error(rw, message, http.StatusInternalServerError)
