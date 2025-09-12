@@ -13,6 +13,7 @@ import (
 	_hnd "github.com/ElfAstAhe/url-shortener/internal/handler"
 	_log "github.com/ElfAstAhe/url-shortener/internal/logger"
 	_storage "github.com/ElfAstAhe/url-shortener/internal/storage"
+	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
 	_migr "github.com/ElfAstAhe/url-shortener/migrations"
 	"go.uber.org/zap"
 )
@@ -35,13 +36,56 @@ func (app *App) Init() error {
 	}
 
 	fmt.Println("Initializing logger...")
+	if err := app.initLogger(); err != nil {
+		return err
+	}
+
+	app.log.Info("Initializing database...")
+	if err := app.initDatabase(); err != nil {
+		return err
+	}
+
+	// Load cache data
+	if err := app.initCacheData(); err != nil {
+		return err
+	}
+
+	// DB migrations
+	if err := app.migrateDatabase(); err != nil {
+		return err
+	}
+
+	app.log.Info("Initializing http server router...")
+	app.AppRouter = _hnd.NewRouter(_cfg.AppConfig, _log.Log.Sugar())
+
+	return nil
+}
+
+func (app *App) Run() error {
+	app.log.Info("Starting graceful shutdown go routine...")
+	go app.gracefulShutdown()
+
+	app.log.Info("Starting server...")
+	if err := http.ListenAndServe(_cfg.AppConfig.HTTP.GetListenerAddr(), app.AppRouter.GetRouter()); err != nil {
+		app.log.Errorf("Error starting server with error [%v]", err)
+
+		os.Exit(1)
+	}
+
+	return nil
+}
+
+func (app *App) initLogger() error {
 	if err := _log.Initialize(_cfg.AppConfig.LogLevel, _cfg.AppConfig.ProjectStage); err != nil {
 		return err
 	}
 
 	app.log = _log.Log.Sugar()
 
-	app.log.Info("Initializing database...")
+	return nil
+}
+
+func (app *App) initDatabase() error {
 	db, err := _db.NewDB(_cfg.AppConfig.DBKind, _cfg.AppConfig.DBDsn)
 	if err != nil {
 		app.log.Errorf("Failed to initialize database: [%v]", err)
@@ -49,7 +93,10 @@ func (app *App) Init() error {
 	}
 	app.DB = db
 
-	// Load cache data
+	return nil
+}
+
+func (app *App) initCacheData() error {
 	if cache, ok := app.DB.(_db.InMemoryCache); ok {
 		app.log.Info("Load data from storage...")
 		if err := app.loadShortURIData(_cfg.AppConfig.StoragePath, cache); err != nil {
@@ -58,7 +105,10 @@ func (app *App) Init() error {
 		}
 	}
 
-	// DB migrations
+	return nil
+}
+
+func (app *App) migrateDatabase() error {
 	if app.DB.GetDBKind() == _cfg.DBKindPostgres {
 		app.log.Info("DB migrations postgres...")
 
@@ -80,23 +130,6 @@ func (app *App) Init() error {
 
 			return err
 		}
-	}
-
-	app.log.Info("Initializing http server router...")
-	app.AppRouter = _hnd.NewRouter(_cfg.AppConfig, _log.Log.Sugar())
-
-	return nil
-}
-
-func (app *App) Run() error {
-	app.log.Info("Starting graceful shutdown go routine...")
-	go app.gracefulShutdown()
-
-	app.log.Info("Starting server...")
-	if err := http.ListenAndServe(_cfg.AppConfig.HTTP.GetListenerAddr(), app.AppRouter.GetRouter()); err != nil {
-		app.log.Errorf("Error starting server with error [%v]", err)
-
-		os.Exit(1)
 	}
 
 	return nil
@@ -130,7 +163,7 @@ func (app *App) loadShortURIData(storagePath string, cache _db.InMemoryCache) er
 	if err != nil {
 		return err
 	}
-	defer storageReader.Close()
+	defer _utl.CloseOnly(storageReader)
 
 	return storageReader.LoadData(cache.GetShortURICache())
 }
@@ -140,7 +173,7 @@ func (app *App) saveShortURIData(storagePath string, cache _db.InMemoryCache) er
 	if err != nil {
 		return err
 	}
-	defer storageWriter.Close()
+	defer _utl.CloseOnly(storageWriter)
 
 	return storageWriter.SaveData(cache.GetShortURICache())
 }
