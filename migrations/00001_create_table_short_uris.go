@@ -16,7 +16,7 @@ const createTableShortURIs = `create table if not exists short_uris (
     update_user varchar(50) null,
     updated timestamptz null,
     constraint short_uris_pk primary key(id),
-    constraint short_uris_uk unique(key)
+    constraint short_uris_uk unique(original_url)
 );`
 
 const dropTableShortURIs = `drop table if exists short_uris cascade;`
