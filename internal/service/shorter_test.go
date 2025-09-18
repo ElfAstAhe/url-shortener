@@ -16,7 +16,7 @@ const ExpectedID = "123"
 type repoMock struct {
 }
 
-func (r repoMock) ListAllByUser(userID string) ([]*_model.ShortURI, error) {
+func (r repoMock) ListAllByUser(userID string) ([]*model.ShortURI, error) {
 	//TODO implement me
 	panic("implement me")
 }

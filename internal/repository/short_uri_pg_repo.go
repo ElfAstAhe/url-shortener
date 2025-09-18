@@ -174,9 +174,7 @@ func (pgr *shortURIPgRepo) ListAllByUser(userID string) ([]*_model.ShortURI, err
 		}
 
 		err := rows.Scan(&result.ID, result.OriginalURL, &result.Key, &result.CreateUser, &result.Created, &result.UpdateUser, &result.Updated)
-		if errors.Is(err, sql.ErrNoRows) {
-			return res, nil
-		} else if err != nil {
+		if err != nil {
 			return nil, err
 		}
 
