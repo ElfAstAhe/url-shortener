@@ -31,7 +31,7 @@ func up00001(ctx context.Context, db *sql.DB) error {
 }
 
 func down00001(ctx context.Context, db *sql.DB) error {
-	return downCreateTableShortUris(ctx, db)
+	return downDropTableShortUris(ctx, db)
 }
 
 func upCreateTableShortUris(ctx context.Context, db *sql.DB) error {
@@ -43,7 +43,7 @@ func upCreateTableShortUris(ctx context.Context, db *sql.DB) error {
 	return nil
 }
 
-func downCreateTableShortUris(ctx context.Context, db *sql.DB) error {
+func downDropTableShortUris(ctx context.Context, db *sql.DB) error {
 	_, err := db.ExecContext(ctx, dropTableShortURIs)
 	if err != nil {
 		return err

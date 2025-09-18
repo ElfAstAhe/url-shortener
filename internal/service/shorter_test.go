@@ -16,6 +16,11 @@ const ExpectedID = "123"
 type repoMock struct {
 }
 
+func (r repoMock) ListAllByUser(userID string) ([]*_model.ShortURI, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (r repoMock) BatchCreate(batch map[string]*model.ShortURI) (map[string]*model.ShortURI, error) {
 	return map[string]*model.ShortURI{}, nil
 }

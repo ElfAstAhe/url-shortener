@@ -11,9 +11,23 @@ import (
 )
 
 const (
-	getSQL      string = "select id, original_url, key, create_user, created, update_user, updated from short_uris where id = $1"
-	getByKeySQL string = "select id, original_url, key, create_user, created, update_user, updated from short_uris where key = $1"
-	createSQL   string = "insert into short_uris(id, original_url, key, create_user, created, update_user, updated) values ($1, $2, $3, $4, $5, $6, $7)"
+	getSQL       string = "select id, original_url, key, create_user, created, update_user, updated from short_uris where id = $1"
+	getByKeySQL  string = "select id, original_url, key, create_user, created, update_user, updated from short_uris where key = $1"
+	createSQL    string = "insert into short_uris(id, original_url, key, create_user, created, update_user, updated) values ($1, $2, $3, $4, $5, $6, $7)"
+	getAllByUser        = `select
+    s.id,
+    s.original_url,
+    s.key,
+    s.create_user,
+    s.created,
+    s.update_user,
+    s.updated
+from
+    short_uris s
+    inner join short_uri_users su
+        on
+            su.user_id = $1
+        and su.short_uri_id = s.id`
 )
 
 type shortURIPgRepo struct {
@@ -142,6 +156,31 @@ func (pgr *shortURIPgRepo) BatchCreate(batch map[string]*_model.ShortURI) (map[s
 			return nil, err
 		}
 		res[correlation] = saved
+	}
+
+	return res, nil
+}
+
+func (pgr *shortURIPgRepo) ListAllByUser(userID string) ([]*_model.ShortURI, error) {
+	rows, err := pgr.db.GetDB().Query(getAllByUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer _utl.CloseOnly(rows)
+	var res = make([]*_model.ShortURI, 0)
+	for rows.Next() {
+		var result = _model.ShortURI{
+			OriginalURL: &_model.CustomURL{},
+		}
+
+		err := rows.Scan(&result.ID, result.OriginalURL, &result.Key, &result.CreateUser, &result.Created, &result.UpdateUser, &result.Updated)
+		if errors.Is(err, sql.ErrNoRows) {
+			return res, nil
+		} else if err != nil {
+			return nil, err
+		}
+
+		res = append(res, &result)
 	}
 
 	return res, nil

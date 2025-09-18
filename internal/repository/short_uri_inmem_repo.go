@@ -93,3 +93,48 @@ func (imr *shortURIInMemRepo) BatchCreate(batch map[string]*_model.ShortURI) (ma
 
 	return res, nil
 }
+
+func (imr *shortURIInMemRepo) ListAllByUser(userID string) ([]*_model.ShortURI, error) {
+	if userID == "" {
+		return nil, nil
+	}
+	// all shorten ids by user
+	ids, err := imr.listIDsByUser(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return imr.listAllByIDs(ids)
+}
+
+func (imr *shortURIInMemRepo) listIDsByUser(userID string) ([]string, error) {
+	if userID == "" {
+		return nil, nil
+	}
+	res := make([]string, 0)
+	for _, value := range imr.Cache.GetShortURIUserCache() {
+		if value.UserID == userID {
+			res = append(res, value.ShortURIID)
+		}
+	}
+
+	return res, nil
+}
+
+func (imr *shortURIInMemRepo) listAllByIDs(ids []string) ([]*_model.ShortURI, error) {
+	if len(ids) == 0 {
+		return []*_model.ShortURI{}, nil
+	}
+	res := make([]*_model.ShortURI, 0)
+	for _, id := range ids {
+		find, err := imr.Get(id)
+		if err != nil {
+			return nil, err
+		}
+		if find != nil {
+			res = append(res, find)
+		}
+	}
+
+	return res, nil
+}
