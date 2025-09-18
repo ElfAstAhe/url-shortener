@@ -66,7 +66,7 @@ func TestShorterService_store_shouldReturnKey(t *testing.T) {
 	t.Run("should return key", func(t *testing.T) {
 		service, err := NewShorterService(&repoMock{})
 		require.NoError(t, err)
-		actual, err := service.Store(ExpectedOriginalURL)
+		actual, err := service.Store(ExpectedOriginalURL, "test_user_id")
 
 		assert.NoError(t, err)
 		assert.Equal(t, ExpectedKey, actual)

@@ -6,13 +6,21 @@ import (
 	"net/http"
 
 	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
+	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
 )
 
 func (cr *chiRouter) rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
-	var data []byte
-	var err error
+	userID, err := _auth.GetUserID(r)
+	if err != nil {
+		message := fmt.Sprintf("Error get user id from cookie [%v]", err)
+		cr.log.Error(message)
+		http.Error(w, message, http.StatusInternalServerError)
+
+		return
+	}
+
 	// read income data
-	data, err = io.ReadAll(r.Body)
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 
@@ -27,7 +35,7 @@ func (cr *chiRouter) rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// store data
-	key, conflictErr := service.Store(string(data))
+	key, conflictErr := service.Store(string(data), userID)
 	if conflictErr != nil && key == "" {
 		http.Error(w, conflictErr.Error(), http.StatusInternalServerError)
 

@@ -88,8 +88,9 @@ func processUnauthorized(rw http.ResponseWriter, message string) error {
 	}
 
 	http.SetCookie(rw, &http.Cookie{
-		Name:  _auth.Cookie,
-		Value: tokenString,
+		Name:     _auth.Cookie,
+		Value:    tokenString,
+		SameSite: http.SameSiteStrictMode,
 	})
 
 	rw.WriteHeader(http.StatusUnauthorized)

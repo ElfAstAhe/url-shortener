@@ -31,13 +31,14 @@ func (s *Shorter) GetURL(key string) (string, error) {
 	return model.OriginalURL.URL.String(), nil
 }
 
-func (s *Shorter) Store(url string) (string, error) {
+func (s *Shorter) Store(url string, userID string) (string, error) {
 	key := _utl.EncodeURIStr(url)
 	model, err := _model.NewShortURI(url, key)
 	if err != nil {
 		return "", err
 	}
 
+	model.CreateUser = userID
 	model, err = s.Repository.Create(model)
 	if err != nil && model == nil {
 		return "", err

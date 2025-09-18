@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	getSQL          string = "select id, original_url, key, create_user, created, update_user, updated from short_uris where id = $1"
-	getByKeySQL     string = "select id, original_url, key, create_user, created, update_user, updated from short_uris where key = $1"
-	createSQL       string = "insert into short_uris(id, original_url, key, create_user, created, update_user, updated) values ($1, $2, $3, $4, $5, $6, $7)"
-	getAllByUserSQL string = `select
+	getShortURISQL           string = "select id, original_url, key, create_user, created, update_user, updated from short_uris where id = $1"
+	getShortURIByKeySQL      string = "select id, original_url, key, create_user, created, update_user, updated from short_uris where key = $1"
+	createShortURISQL        string = "insert into short_uris(id, original_url, key, create_user, created, update_user, updated) values ($1, $2, $3, $4, $5, $6, $7)"
+	listShortURIAllByUserSQL string = `select
     s.id,
     s.original_url,
     s.key,
@@ -32,19 +32,28 @@ from
 )
 
 type shortURIPgRepo struct {
-	db _db.DB
+	db       _db.DB
+	userRepo ShortURIUserRepository
 }
 
-func newShortURIPgRepo(db _db.DB) (ShortURIRepository, error) {
+func newShortURIPgRepo(db _db.DB) (*shortURIPgRepo, error) {
 	if db == nil {
 		return nil, errors.New("db is nil")
 	}
 
-	return &shortURIPgRepo{db: db}, nil
+	userRepo, err := NewShortURIUserRepository(db)
+	if err != nil {
+		return nil, err
+	}
+
+	return &shortURIPgRepo{
+		db:       db,
+		userRepo: userRepo,
+	}, nil
 }
 
-func (pgr *shortURIPgRepo) Get(id string) (*_model.ShortURI, error) {
-	row := pgr.db.GetDB().QueryRow(getSQL, id)
+func (pgs *shortURIPgRepo) Get(id string) (*_model.ShortURI, error) {
+	row := pgs.db.GetDB().QueryRow(getShortURISQL, id)
 	if row.Err() != nil && !errors.Is(row.Err(), sql.ErrNoRows) {
 		return nil, nil
 	}
@@ -64,8 +73,8 @@ func (pgr *shortURIPgRepo) Get(id string) (*_model.ShortURI, error) {
 	return &result, nil
 }
 
-func (pgr *shortURIPgRepo) GetByKey(key string) (*_model.ShortURI, error) {
-	row := pgr.db.GetDB().QueryRow(getByKeySQL, key)
+func (pgs *shortURIPgRepo) GetByKey(key string) (*_model.ShortURI, error) {
+	row := pgs.db.GetDB().QueryRow(getShortURIByKeySQL, key)
 	if row.Err() != nil && !errors.Is(row.Err(), sql.ErrNoRows) {
 		return nil, nil
 	}
@@ -85,7 +94,7 @@ func (pgr *shortURIPgRepo) GetByKey(key string) (*_model.ShortURI, error) {
 	return &result, nil
 }
 
-func (pgr *shortURIPgRepo) Create(shortURI *_model.ShortURI) (*_model.ShortURI, error) {
+func (pgs *shortURIPgRepo) Create(shortURI *_model.ShortURI) (*_model.ShortURI, error) {
 	if shortURI == nil {
 		return nil, errors.New("shortURI is nil")
 	}
@@ -93,7 +102,7 @@ func (pgr *shortURIPgRepo) Create(shortURI *_model.ShortURI) (*_model.ShortURI, 
 		return nil, errors.New("shortURI Key is empty")
 	}
 
-	find, err := pgr.GetByKey(shortURI.Key)
+	find, err := pgs.GetByKey(shortURI.Key)
 	if err != nil {
 		return nil, err
 	}
@@ -101,13 +110,13 @@ func (pgr *shortURIPgRepo) Create(shortURI *_model.ShortURI) (*_model.ShortURI, 
 		return find, errors.New("shortURI already exists")
 	}
 
-	preparedSQL, err := pgr.db.GetDB().Prepare(createSQL)
+	preparedSQL, err := pgs.db.GetDB().Prepare(createShortURISQL)
 	if err != nil {
 		return nil, err
 	}
 	defer _utl.CloseOnly(preparedSQL)
 	// id, original_url, key, create_user, created, update_user, updated
-	res, err := internalCreate(preparedSQL, shortURI)
+	res, err := internalCreateShortURI(preparedSQL, shortURI)
 	if err != nil {
 		return nil, err
 	}
@@ -116,12 +125,12 @@ func (pgr *shortURIPgRepo) Create(shortURI *_model.ShortURI) (*_model.ShortURI, 
 }
 
 // BatchCreate is creation a batch data in transaction
-func (pgr *shortURIPgRepo) BatchCreate(batch map[string]*_model.ShortURI) (map[string]*_model.ShortURI, error) {
+func (pgs *shortURIPgRepo) BatchCreate(batch map[string]*_model.ShortURI) (map[string]*_model.ShortURI, error) {
 	if len(batch) == 0 {
 		return batch, nil
 	}
 
-	tx, err := pgr.db.GetDB().Begin()
+	tx, err := pgs.db.GetDB().Begin()
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +144,7 @@ func (pgr *shortURIPgRepo) BatchCreate(batch map[string]*_model.ShortURI) (map[s
 		tx.Commit()
 	}()
 
-	stmt, err := tx.Prepare(createSQL)
+	stmt, err := tx.Prepare(createShortURISQL)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +152,7 @@ func (pgr *shortURIPgRepo) BatchCreate(batch map[string]*_model.ShortURI) (map[s
 
 	res := make(map[string]*_model.ShortURI)
 	for correlation, shortURL := range batch {
-		find, err := pgr.GetByKey(shortURL.Key)
+		find, err := pgs.GetByKey(shortURL.Key)
 		if err != nil {
 			return nil, err
 		}
@@ -152,7 +161,7 @@ func (pgr *shortURIPgRepo) BatchCreate(batch map[string]*_model.ShortURI) (map[s
 
 			continue
 		}
-		saved, err := internalCreate(stmt, shortURL)
+		saved, err := internalCreateShortURI(stmt, shortURL)
 		if err != nil {
 			return nil, err
 		}
@@ -162,8 +171,8 @@ func (pgr *shortURIPgRepo) BatchCreate(batch map[string]*_model.ShortURI) (map[s
 	return res, nil
 }
 
-func (pgr *shortURIPgRepo) ListAllByUser(userID string) ([]*_model.ShortURI, error) {
-	rows, err := pgr.db.GetDB().Query(getAllByUserSQL, userID)
+func (pgs *shortURIPgRepo) ListAllByUser(userID string) ([]*_model.ShortURI, error) {
+	rows, err := pgs.db.GetDB().Query(listShortURIAllByUserSQL, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +197,7 @@ func (pgr *shortURIPgRepo) ListAllByUser(userID string) ([]*_model.ShortURI, err
 	return res, nil
 }
 
-func internalCreate(preparedSQL *sql.Stmt, shortURI *_model.ShortURI) (*_model.ShortURI, error) {
+func internalCreateShortURI(preparedSQL *sql.Stmt, shortURI *_model.ShortURI) (*_model.ShortURI, error) {
 	newID, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
