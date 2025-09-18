@@ -11,7 +11,7 @@ const createTableShortURIAudit = `CREATE TABLE IF NOT EXISTS short_uri_audit (
     id varchar(50) not null,
     short_uri_id varchar(50) not null,
     user_id varchar(50) not null,
-    user varchar(100) null,
+    "user" varchar(100) null,
     date timestamptz not null default now(),
     operation varchar(50) not null,
     constraint short_uri_audit_pk PRIMARY KEY (id)

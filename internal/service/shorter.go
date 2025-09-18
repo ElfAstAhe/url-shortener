@@ -11,6 +11,11 @@ type Shorter struct {
 	Repository _repo.ShortURIRepository
 }
 
+func (s *Shorter) GetAllUserShorts(userID string) (UserShorts, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func NewShorterService(repo _repo.ShortURIRepository) (ShorterService, error) {
 	return &Shorter{
 		Repository: repo,

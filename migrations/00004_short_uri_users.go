@@ -11,6 +11,7 @@ const createTableShortURIUsers = `CREATE TABLE IF NOT EXISTS short_uri_users (
     id varchar(50) not null,
     short_uri_id varchar(50) not null,
     user_id varchar(50) not null,
+    constraint short_uri_users_pk PRIMARY KEY (id)
 );`
 
 const dropTableShortURIUsers = `drop table if exists short_uri_users cascade;`
