@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	getSQL       string = "select id, original_url, key, create_user, created, update_user, updated from short_uris where id = $1"
-	getByKeySQL  string = "select id, original_url, key, create_user, created, update_user, updated from short_uris where key = $1"
-	createSQL    string = "insert into short_uris(id, original_url, key, create_user, created, update_user, updated) values ($1, $2, $3, $4, $5, $6, $7)"
-	getAllByUser        = `select
+	getSQL          string = "select id, original_url, key, create_user, created, update_user, updated from short_uris where id = $1"
+	getByKeySQL     string = "select id, original_url, key, create_user, created, update_user, updated from short_uris where key = $1"
+	createSQL       string = "insert into short_uris(id, original_url, key, create_user, created, update_user, updated) values ($1, $2, $3, $4, $5, $6, $7)"
+	getAllByUserSQL string = `select
     s.id,
     s.original_url,
     s.key,
@@ -28,6 +28,7 @@ from
         on
             su.user_id = $1
         and su.short_uri_id = s.id`
+	createUserSQL string = `insert into short_uri_users(id, user_id, short_uri_id) values ($1, $2, $3)`
 )
 
 type shortURIPgRepo struct {
@@ -162,7 +163,7 @@ func (pgr *shortURIPgRepo) BatchCreate(batch map[string]*_model.ShortURI) (map[s
 }
 
 func (pgr *shortURIPgRepo) ListAllByUser(userID string) ([]*_model.ShortURI, error) {
-	rows, err := pgr.db.GetDB().Query(getAllByUser, userID)
+	rows, err := pgr.db.GetDB().Query(getAllByUserSQL, userID)
 	if err != nil {
 		return nil, err
 	}
