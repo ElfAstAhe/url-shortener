@@ -180,6 +180,9 @@ func (pgr *shortURIPgRepo) ListAllByUser(userID string) ([]*_model.ShortURI, err
 
 		res = append(res, &result)
 	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
 
 	return res, nil
 }
