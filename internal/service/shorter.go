@@ -11,11 +11,6 @@ type Shorter struct {
 	Repository _repo.ShortURIRepository
 }
 
-func (s *Shorter) GetAllUserShorts(userID string) (UserShorts, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func NewShorterService(repo _repo.ShortURIRepository) (ShorterService, error) {
 	return &Shorter{
 		Repository: repo,
@@ -76,6 +71,20 @@ func (s *Shorter) BatchStore(source CorrelationUrls) (CorrelationShorts, error) 
 	return res, nil
 }
 
+func (s *Shorter) GetAllUserShorts(userID string) (UserShorts, error) {
+	entities, err := s.Repository.ListAllByUser(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	models, err := toUserShorts(entities)
+	if err != nil {
+		return nil, err
+	}
+
+	return models, nil
+}
+
 // ================
 
 func toBatchSource(source CorrelationUrls) (map[string]*_model.ShortURI, error) {
@@ -98,4 +107,16 @@ func toBatchResult(source map[string]*_model.ShortURI) (CorrelationShorts, error
 	}
 
 	return batch, nil
+}
+
+func toUserShorts(entities []*_model.ShortURI) (UserShorts, error) {
+	if len(entities) == 0 {
+		return nil, nil
+	}
+	res := make(UserShorts)
+	for _, entity := range entities {
+		res[entity.OriginalURL.URL.String()] = _utl.BuildNewURI(_cfg.AppConfig.BaseURL, entity.Key)
+	}
+
+	return res, nil
 }
