@@ -17,7 +17,7 @@ func (a AppAuthInfoAbsentError) Error() string {
 		return fmt.Sprintf("auth user info absent with err [%v]", a.Err)
 	}
 
-	return fmt.Sprint("auth user info absent")
+	return "auth user info absent"
 }
 
 func (a AppAuthInfoAbsentError) Unwrap() error {

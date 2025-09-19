@@ -17,7 +17,7 @@ func (a *AppAuthCookieAbsentError) Error() string {
 		return fmt.Sprintf("auth cookie absent with err [%v]", a.Err)
 	}
 
-	return fmt.Sprint("auth cookie absent")
+	return "auth cookie absent"
 }
 
 func (a *AppAuthCookieAbsentError) Unwrap() error {
