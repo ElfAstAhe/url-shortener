@@ -21,8 +21,6 @@ func (cr *chiRouter) shortenPostHandler(rw http.ResponseWriter, r *http.Request)
 			message := fmt.Sprintf("process unauthorized error: [%v]", err)
 			cr.log.Error(message)
 		}
-
-		return
 	}
 
 	dec := json.NewDecoder(r.Body)
