@@ -31,17 +31,10 @@ func (cr *chiRouter) createDBConnCheckService() (_repo.DBConnCheckRepository, er
 	return _repo.NewDBConnCheckRepository(db)
 }
 
-func (cr *chiRouter) processUnauthorizedIter14(rw http.ResponseWriter, message string) error {
-	tokenString, err := _auth.NewJWTStringFromUserInfo(_auth.BuildRandomUserInfo())
-	if err != nil {
+func (cr *chiRouter) iter14ProcessUnauthorized(rw http.ResponseWriter, message string) error {
+	if _, err := cr.iter14SetAuthCookie(rw); err != nil {
 		return err
 	}
-
-	http.SetCookie(rw, &http.Cookie{
-		Name:     _auth.CookieName,
-		Value:    tokenString,
-		SameSite: http.SameSiteStrictMode,
-	})
 
 	rw.WriteHeader(http.StatusUnauthorized)
 	if message != "" {
@@ -51,4 +44,20 @@ func (cr *chiRouter) processUnauthorizedIter14(rw http.ResponseWriter, message s
 	}
 
 	return nil
+}
+
+func (cr *chiRouter) iter14SetAuthCookie(rw http.ResponseWriter) (*_auth.UserInfo, error) {
+	userInfo := _auth.BuildRandomUserInfo()
+	tokenString, err := _auth.NewJWTStringFromUserInfo(userInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	http.SetCookie(rw, &http.Cookie{
+		Name:     _auth.CookieName,
+		Value:    tokenString,
+		SameSite: http.SameSiteStrictMode,
+	})
+
+	return userInfo, nil
 }
