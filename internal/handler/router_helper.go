@@ -46,6 +46,21 @@ func (cr *chiRouter) iter14ProcessUnauthorized(rw http.ResponseWriter, message s
 	return nil
 }
 
+func (cr *chiRouter) iter14ProcessNoContent(rw http.ResponseWriter, message string) error {
+	if _, err := cr.iter14SetAuthCookie(rw); err != nil {
+		return err
+	}
+
+	rw.WriteHeader(http.StatusNoContent)
+	if message != "" {
+		if _, err := rw.Write([]byte(message)); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (cr *chiRouter) iter14SetAuthCookie(rw http.ResponseWriter) (*_auth.UserInfo, error) {
 	userInfo := _auth.BuildRandomUserInfo()
 	tokenString, err := _auth.NewJWTStringFromUserInfo(userInfo)

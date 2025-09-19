@@ -11,22 +11,12 @@ import (
 )
 
 func (cr *chiRouter) userUrlsHandler(rw http.ResponseWriter, r *http.Request) {
-	// Attention!!! For iteration 14 only !!!
-	if len(r.CookiesNamed(_auth.CookieName)) == 0 {
-		message := fmt.Sprintf("No cookie named [%s]", _auth.CookieName)
-		cr.log.Warn(message)
-
-		rw.WriteHeader(http.StatusNoContent)
-
-		return
-	}
-
 	userInfo, err := _auth.UserInfoFromRequestJWT(r)
 	if err != nil {
 		// Attention!!! For iteration 14 ONLY, remove in future!
 		message := fmt.Sprintf("userInfoFromRequestJWT error: [%v]", err)
 		cr.log.Error(message)
-		if err := cr.iter14ProcessUnauthorized(rw, message); err != nil {
+		if err := cr.iter14ProcessNoContent(rw, message); err != nil {
 			message := fmt.Sprintf("process unauthorized error: [%v]", err)
 			cr.log.Error(message)
 		}
