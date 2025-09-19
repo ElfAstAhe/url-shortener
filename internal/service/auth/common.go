@@ -19,7 +19,10 @@ const (
 	UnknownUser   string = "unknown"
 )
 const CookieName string = "Authorization"
-const ContextUserInfo string = "UserInfo"
+
+type ContextUserInfoType string
+
+const ContextUserInfo ContextUserInfoType = "UserInfo"
 
 type Roles []string
 
