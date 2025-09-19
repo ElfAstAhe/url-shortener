@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,25 +12,13 @@ import (
 
 func (cr *chiRouter) userUrlsHandler(rw http.ResponseWriter, r *http.Request) {
 	userInfo, err := _auth.UserInfoFromRequestJWT(r)
-
 	if err != nil {
-		message := fmt.Sprintf("error getting user id: [%v]", err)
+		// Attention!!! For iteration 14 ONLY, remove in future!
+		message := fmt.Sprintf("userInfoFromRequestJWT error: [%v]", err)
 		cr.log.Error(message)
-
-		if err := processUnauthorized(rw, message); err != nil {
-			message := fmt.Sprintf("error processing unauthorized request: [%v]", err)
+		if err := cr.processUnauthorizedIter14(rw, message); err != nil {
+			message := fmt.Sprintf("process unauthorized error: [%v]", err)
 			cr.log.Error(message)
-			http.Error(rw, message, http.StatusInternalServerError)
-		}
-
-		return
-	}
-
-	if userID == "" {
-		if err := processUnauthorized(rw, ""); err != nil {
-			message := fmt.Sprintf("error processing empty user id request: [%v]", err)
-			cr.log.Error(message)
-			http.Error(rw, message, http.StatusInternalServerError)
 		}
 
 		return
@@ -44,7 +33,9 @@ func (cr *chiRouter) userUrlsHandler(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	modelData, err := service.GetAllUserShorts(userID)
+	ctx := context.WithValue(r.Context(), _auth.ContextUserInfo, userInfo)
+
+	modelData, err := service.GetAllUserShorts(ctx, userInfo.UserID)
 	if err != nil {
 		message := fmt.Sprintf("Error getting all user shortens: [%s]", err)
 		cr.log.Error(message)
@@ -61,14 +52,12 @@ func (cr *chiRouter) userUrlsHandler(rw http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	if len(data) == 0 {
-		rw.WriteHeader(http.StatusNoContent)
-
-		return
-	}
-
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusOK)
+
+	if len(data) == 0 {
+		rw.WriteHeader(http.StatusNoContent)
+	}
 
 	enc := json.NewEncoder(rw)
 	if err := enc.Encode(data); err != nil {
@@ -80,26 +69,4 @@ func (cr *chiRouter) userUrlsHandler(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	cr.log.Debug("Done")
-}
-
-func processUnauthorized(rw http.ResponseWriter, message string) error {
-	tokenString, err := _auth.NewTokenString(_auth.TestUser, _auth.TestUserID, _auth.TestRoles...)
-	if err != nil {
-		return err
-	}
-
-	http.SetCookie(rw, &http.Cookie{
-		Name:     _auth.Cookie,
-		Value:    tokenString,
-		SameSite: http.SameSiteStrictMode,
-	})
-
-	rw.WriteHeader(http.StatusUnauthorized)
-	if message != "" {
-		if _, err := rw.Write([]byte(message)); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

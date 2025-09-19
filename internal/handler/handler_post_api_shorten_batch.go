@@ -1,18 +1,32 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	_dto "github.com/ElfAstAhe/url-shortener/internal/handler/dto"
 	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
+	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
 )
 
 func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Request) {
+	userInfo, err := _auth.UserInfoFromRequestJWT(r)
+	if err != nil {
+		// Attention!!! For iteration 14 ONLY, remove in future!
+		message := fmt.Sprintf("userInfoFromRequestJWT error: [%v]", err)
+		cr.log.Error(message)
+		if err := cr.processUnauthorizedIter14(rw, message); err != nil {
+			message := fmt.Sprintf("process unauthorized error: [%v]", err)
+			cr.log.Error(message)
+		}
+
+		return
+	}
+
 	dec := json.NewDecoder(r.Body)
 	var income = make([]*_dto.ShortenBatchCreateItem, 0)
-
 	if err := dec.Decode(&income); err != nil {
 		message := fmt.Sprintf("Error deserializing request JSON body: [%s]", err)
 		cr.log.Error(message)
@@ -39,7 +53,8 @@ func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Req
 		return
 	}
 
-	serviceBatchResult, err := service.BatchStore(serviceBatch)
+	ctx := context.WithValue(r.Context(), _auth.ContextUserInfo, userInfo)
+	serviceBatchResult, err := service.BatchStore(ctx, serviceBatch)
 	if err != nil {
 		message := fmt.Sprintf("Error processing batch data: [%s]", err)
 		cr.log.Error(message)

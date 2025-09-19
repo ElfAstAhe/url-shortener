@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,12 +10,16 @@ import (
 	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
 )
 
-func (cr *chiRouter) rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := _auth.GetUserID(r)
+func (cr *chiRouter) rootPOSTHandler(rw http.ResponseWriter, r *http.Request) {
+	userInfo, err := _auth.UserInfoFromRequestJWT(r)
 	if err != nil {
-		message := fmt.Sprintf("Error get user id from cookie [%v]", err)
+		// Attention!!! For iteration 14 ONLY, remove in future!
+		message := fmt.Sprintf("userInfoFromRequestJWT error: [%v]", err)
 		cr.log.Error(message)
-		http.Error(w, message, http.StatusInternalServerError)
+		if err := cr.processUnauthorizedIter14(rw, message); err != nil {
+			message := fmt.Sprintf("process unauthorized error: [%v]", err)
+			cr.log.Error(message)
+		}
 
 		return
 	}
@@ -22,22 +27,23 @@ func (cr *chiRouter) rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 	// read income data
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(rw, err.Error(), http.StatusBadRequest)
 
 		return
 	}
 
 	service, err := cr.createShortenService()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 
 		return
 	}
 
+	ctx := context.WithValue(r.Context(), _auth.ContextUserInfo, userInfo)
 	// store data
-	key, conflictErr := service.Store(string(data), userID)
+	key, conflictErr := service.Store(ctx, string(data))
 	if conflictErr != nil && key == "" {
-		http.Error(w, conflictErr.Error(), http.StatusInternalServerError)
+		http.Error(rw, conflictErr.Error(), http.StatusInternalServerError)
 
 		return
 	}
@@ -45,19 +51,19 @@ func (cr *chiRouter) rootPOSTHandler(w http.ResponseWriter, r *http.Request) {
 	// prepare outcome data
 	newURI, err := _mapper.ShortenCreateResponseFromKey(key)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 
 		return
 	}
 
 	// outcome data
-	w.Header().Set("Content-Type", "text/plain")
+	rw.Header().Set("Content-Type", "text/plain")
 	if conflictErr != nil {
-		w.WriteHeader(http.StatusConflict)
+		rw.WriteHeader(http.StatusConflict)
 	} else {
-		w.WriteHeader(http.StatusCreated)
+		rw.WriteHeader(http.StatusCreated)
 	}
-	_, err = w.Write([]byte(newURI.Result))
+	_, err = rw.Write([]byte(newURI.Result))
 	if err != nil {
 		fmt.Printf("error writing response [%s]", err.Error())
 

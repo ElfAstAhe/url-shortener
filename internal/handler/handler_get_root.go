@@ -19,7 +19,8 @@ func (cr *chiRouter) rootGETHandler(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	fullURL, err := service.GetURL(key)
+
+	fullURL, err := service.GetURL(r.Context(), key)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 

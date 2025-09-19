@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/ElfAstAhe/url-shortener/internal/config"
+	"github.com/ElfAstAhe/url-shortener/internal/service/auth"
 	"github.com/ElfAstAhe/url-shortener/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -42,12 +44,14 @@ func TestRootHandler_getMethod_success(t *testing.T) {
 		config.AppConfig = config.NewConfig()
 		config.AppConfig.LoadConfig()
 	}
+	userInfo := auth.BuildUnknownUserInfo()
 	expectedURL := "http://localhost/test/data"
 	router := NewRouter(config.AppConfig, zap.NewNop().Sugar())
 	chiRouter, ok := router.(*chiRouter)
 	require.True(t, ok)
 	var service, _ = chiRouter.createShortenService()
-	_, err := service.Store(expectedURL)
+	ctx := context.WithValue(context.Background(), auth.ContextUserInfo, userInfo)
+	_, err := service.Store(ctx, expectedURL)
 	require.NoError(t, err)
 	// test cases
 	testCases := []test.HTTPTestCase{

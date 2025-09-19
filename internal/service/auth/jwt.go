@@ -20,17 +20,20 @@ type AppClaims struct {
 const secretKey = "secret-key"
 const timeExpirationDuration = time.Minute * 30
 
-const TestUser = "test_user"
-const TestUserID = "test_user_id"
-
-const Cookie = "Authorization"
-
 var TestRoles Roles = []string{
 	"test_role1",
 	"test_role2",
 }
 
-func NewTokenString(admin bool, userID string, user string, roles ...string) (string, error) {
+func NewJWTStringFromUserInfo(userInfo *UserInfo) (string, error) {
+	if userInfo == nil {
+		return "", errors.New("userInfo is nil")
+	}
+
+	return NewJWTString(userInfo.Admin, userInfo.UserID, userInfo.User, userInfo.Roles...)
+}
+
+func NewJWTString(admin bool, userID string, user string, roles ...string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, newAppClaims(admin, userID, user, roles...))
 
 	res, err := token.SignedString([]byte(secretKey))
@@ -66,10 +69,10 @@ func buildUniqueTokenID() string {
 	return fmt.Sprintf(template, randID.String())
 }
 
-func getAuthToken(r *http.Request) (*jwt.Token, error) {
-	cookie, _ := r.Cookie(Cookie)
+func retrieveJWT(r *http.Request) (*jwt.Token, error) {
+	cookie, _ := r.Cookie(CookieName)
 	if cookie == nil {
-		return nil, nil
+		return nil, fmt.Errorf("no cookie found with name [%s]", CookieName)
 	}
 	if err := cookie.Valid(); err != nil {
 		return nil, err
@@ -91,7 +94,7 @@ func getAuthToken(r *http.Request) (*jwt.Token, error) {
 }
 
 func UserInfoFromRequestJWT(r *http.Request) (*UserInfo, error) {
-	jwtToken, err := getAuthToken(r)
+	jwtToken, err := retrieveJWT(r)
 	if err != nil {
 		return nil, err
 	}
