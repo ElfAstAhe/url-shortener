@@ -1,6 +1,8 @@
 package service
 
 import (
+	"context"
+
 	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
 	_repo "github.com/ElfAstAhe/url-shortener/internal/repository"
@@ -11,7 +13,7 @@ type Shorter struct {
 	Repository _repo.ShortURIRepository
 }
 
-func NewShorterService(repo _repo.ShortURIRepository) (ShorterService, error) {
+func NewShorterService(repo _repo.ShortURIRepository) (*Shorter, error) {
 	return &Shorter{
 		Repository: repo,
 	}, nil
@@ -19,8 +21,8 @@ func NewShorterService(repo _repo.ShortURIRepository) (ShorterService, error) {
 
 // ShorterService
 
-func (s *Shorter) GetURL(key string) (string, error) {
-	model, err := s.Repository.GetByKey(key)
+func (s *Shorter) GetURL(ctx context.Context, key string) (string, error) {
+	model, err := s.Repository.GetByKey(ctx, key)
 	if err != nil {
 		return "", err
 	}
@@ -31,39 +33,39 @@ func (s *Shorter) GetURL(key string) (string, error) {
 	return model.OriginalURL.URL.String(), nil
 }
 
-func (s *Shorter) Store(url string) (string, error) {
+func (s *Shorter) Store(ctx context.Context, url string) (string, error) {
 	key := _utl.EncodeURIStr(url)
 	model, err := _model.NewShortURI(url, key)
 	if err != nil {
 		return "", err
 	}
 
-	model, err = s.Repository.Create(model)
+	model, err = s.Repository.Create(ctx, model)
 	if err != nil && model == nil {
 		return "", err
-	} else if err != nil && model != nil {
+	} else if err != nil {
 		return model.Key, err
 	}
 
 	return model.Key, nil
 }
 
-func (s *Shorter) BatchStore(source CorrelationUrls) (CorrelationShorts, error) {
+func (s *Shorter) BatchStore(ctx context.Context, source CorrelationUrls) (CorrelationShorts, error) {
 	if len(source) == 0 {
 		return CorrelationShorts{}, nil
 	}
 
-	repoBatch, err := toBatchSource(source)
+	repoBatch, err := s.toBatchSource(source)
 	if err != nil {
 		return nil, err
 	}
 
-	batchRes, err := s.Repository.BatchCreate(repoBatch)
+	batchRes, err := s.Repository.BatchCreate(ctx, repoBatch)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := toBatchResult(batchRes)
+	res, err := s.toBatchResult(batchRes)
 	if err != nil {
 		return nil, err
 	}
@@ -71,9 +73,23 @@ func (s *Shorter) BatchStore(source CorrelationUrls) (CorrelationShorts, error) 
 	return res, nil
 }
 
+func (s *Shorter) GetAllUserShorts(ctx context.Context, userID string) (UserShorts, error) {
+	entities, err := s.Repository.ListAllByUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	models, err := s.toUserShorts(entities)
+	if err != nil {
+		return nil, err
+	}
+
+	return models, nil
+}
+
 // ================
 
-func toBatchSource(source CorrelationUrls) (map[string]*_model.ShortURI, error) {
+func (s *Shorter) toBatchSource(source CorrelationUrls) (map[string]*_model.ShortURI, error) {
 	batch := make(map[string]*_model.ShortURI)
 	for correlation, origURL := range source {
 		item, err := _model.NewShortURI(origURL, _utl.EncodeURIStr(origURL))
@@ -86,11 +102,23 @@ func toBatchSource(source CorrelationUrls) (map[string]*_model.ShortURI, error) 
 	return batch, nil
 }
 
-func toBatchResult(source map[string]*_model.ShortURI) (CorrelationShorts, error) {
+func (s *Shorter) toBatchResult(source map[string]*_model.ShortURI) (CorrelationShorts, error) {
 	batch := make(CorrelationShorts)
 	for correlation, shortURL := range source {
 		batch[correlation] = _utl.BuildNewURI(_cfg.AppConfig.BaseURL, shortURL.Key)
 	}
 
 	return batch, nil
+}
+
+func (s *Shorter) toUserShorts(entities []*_model.ShortURI) (UserShorts, error) {
+	if len(entities) == 0 {
+		return nil, nil
+	}
+	res := make(UserShorts)
+	for _, entity := range entities {
+		res[entity.OriginalURL.URL.String()] = _utl.BuildNewURI(_cfg.AppConfig.BaseURL, entity.Key)
+	}
+
+	return res, nil
 }

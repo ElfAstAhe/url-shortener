@@ -3,41 +3,38 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
-	_dto "github.com/ElfAstAhe/url-shortener/internal/handler/dto"
 	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
 	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
+	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
 )
 
-func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Request) {
+func (cr *chiRouter) userUrlsHandler(rw http.ResponseWriter, r *http.Request) {
 	userInfo, err := _auth.UserInfoFromRequestJWT(r)
 	if err != nil {
+		if errors.As(err, &_err.AppAuthInfoAbsentError{}) {
+			message := fmt.Sprintf("User info absent from app auth cookie [%v]", err)
+			cr.log.Warn(message)
+
+			if err := cr.iter14ProcessUnauthorized(rw, ""); err != nil {
+				message := fmt.Sprintf("error send unauthorized [%v]", err)
+				cr.log.Error(message)
+			}
+
+			return
+		}
+
+		// default action
 		// Attention!!! For iteration 14 ONLY, remove in future!
 		message := fmt.Sprintf("userInfoFromRequestJWT error: [%v]", err)
-		cr.log.Error(message)
-		if userInfo, err = cr.iter14SetAuthCookie(rw); err != nil {
+		cr.log.Warn(message)
+		if err := cr.iter14ProcessNoContent(rw, message); err != nil {
 			message := fmt.Sprintf("process unauthorized error: [%v]", err)
 			cr.log.Error(message)
 		}
-	}
-
-	dec := json.NewDecoder(r.Body)
-	var income = make([]*_dto.ShortenBatchCreateItem, 0)
-	if err := dec.Decode(&income); err != nil {
-		message := fmt.Sprintf("Error deserializing request JSON body: [%s]", err)
-		cr.log.Error(message)
-		http.Error(rw, message, http.StatusInternalServerError)
-
-		return
-	}
-
-	serviceBatch, err := _mapper.ShortenBatchFromDto(income)
-	if err != nil {
-		message := fmt.Sprintf("Error map income data into internal structs: [%s]", err)
-		cr.log.Error(message)
-		http.Error(rw, message, http.StatusInternalServerError)
 
 		return
 	}
@@ -52,29 +49,33 @@ func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Req
 	}
 
 	ctx := context.WithValue(r.Context(), _auth.ContextUserInfo, userInfo)
-	serviceBatchResult, err := service.BatchStore(ctx, serviceBatch)
+
+	modelData, err := service.GetAllUserShorts(ctx, userInfo.UserID)
 	if err != nil {
-		message := fmt.Sprintf("Error processing batch data: [%s]", err)
+		message := fmt.Sprintf("Error getting all user shortens: [%s]", err)
 		cr.log.Error(message)
 		http.Error(rw, message, http.StatusInternalServerError)
 
 		return
 	}
 
-	respBatch, err := _mapper.ShortenBatchResponseFromKeys(serviceBatchResult)
+	data, err := _mapper.UserShortensFromModel(modelData)
 	if err != nil {
-		message := fmt.Sprintf("Error converting batch data: [%s]", err)
+		message := fmt.Sprintf("Error map user shortens: [%s]", err)
 		cr.log.Error(message)
-		http.Error(rw, message, http.StatusInternalServerError)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 
 		return
 	}
-
 	rw.Header().Set("Content-Type", "application/json")
-	rw.WriteHeader(http.StatusCreated)
+	rw.WriteHeader(http.StatusOK)
+
+	if len(data) == 0 {
+		rw.WriteHeader(http.StatusNoContent)
+	}
 
 	enc := json.NewEncoder(rw)
-	if err := enc.Encode(respBatch); err != nil {
+	if err := enc.Encode(data); err != nil {
 		message := fmt.Sprintf("Error encoding response as JSON: [%s]", err)
 		cr.log.Error(message)
 		http.Error(rw, message, http.StatusInternalServerError)
@@ -82,5 +83,5 @@ func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Req
 		return
 	}
 
-	cr.log.Debug("Done batch")
+	cr.log.Debug("Done")
 }

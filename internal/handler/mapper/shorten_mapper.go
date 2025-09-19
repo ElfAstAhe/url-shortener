@@ -67,3 +67,15 @@ func ShortenBatchFromDto(source []*_dto.ShortenBatchCreateItem) (map[string]stri
 
 	return res, nil
 }
+
+func UserShortensFromModel(source map[string]string) ([]*_dto.UserShorten, error) {
+	res := make([]*_dto.UserShorten, 0)
+	if len(source) == 0 {
+		return nil, nil
+	}
+	for key, value := range source {
+		res = append(res, _dto.NewUserShorten(value, key))
+	}
+
+	return res, nil
+}

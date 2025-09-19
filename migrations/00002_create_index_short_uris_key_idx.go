@@ -20,7 +20,7 @@ func Up00002(ctx context.Context, db *sql.DB) error {
 }
 
 func Down00002(ctx context.Context, db *sql.DB) error {
-	return downCreateIndexShortURIsKeyIdx(ctx, db)
+	return downDropIndexShortURIsKeyIdx(ctx, db)
 }
 
 func upCreateIndexShortURIsKeyIdx(ctx context.Context, db *sql.DB) error {
@@ -32,7 +32,7 @@ func upCreateIndexShortURIsKeyIdx(ctx context.Context, db *sql.DB) error {
 	return nil
 }
 
-func downCreateIndexShortURIsKeyIdx(ctx context.Context, db *sql.DB) error {
+func downDropIndexShortURIsKeyIdx(ctx context.Context, db *sql.DB) error {
 	_, err := db.ExecContext(ctx, dropIndexShortURIs)
 	if err != nil {
 		return err

@@ -6,4 +6,6 @@ import (
 
 type InMemoryCache interface {
 	GetShortURICache() map[string]*_model.ShortURI
+	GetShortURIUserCache() map[string]*_model.ShortURIUser
+	GetShortURIAuditCache() map[string]*_model.ShortURIAudit
 }

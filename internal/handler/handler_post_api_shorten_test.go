@@ -9,8 +9,10 @@ import (
 
 	"github.com/ElfAstAhe/url-shortener/internal/config"
 	"github.com/ElfAstAhe/url-shortener/internal/handler/dto"
+	"github.com/ElfAstAhe/url-shortener/internal/service/auth"
 	"github.com/ElfAstAhe/url-shortener/pkg/test"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
@@ -24,9 +26,16 @@ func TestShortenPostHandler_DataCorrect_ShouldSuccess(t *testing.T) {
 	income := dto.ShortenCreateRequest{
 		URL: "http://localhost/test/data/post",
 	}
+	userInfo := auth.BuildRandomUserInfo()
+	jwtString, err := auth.NewJWTStringFromUserInfo(userInfo)
+	require.NoError(t, err)
 	incomeJSON, _ := json.Marshal(income)
 	t.Run("", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewBuffer(incomeJSON))
+		req.AddCookie(&http.Cookie{
+			Name:  auth.CookieName,
+			Value: jwtString,
+		})
 		recorder := httptest.NewRecorder()
 		router.GetRouter().ServeHTTP(recorder, req)
 
@@ -45,6 +54,9 @@ func TestShortenPostHandler_DataIncorrect_ShouldFail(t *testing.T) {
 	income := dto.ShortenCreateRequest{
 		URL: "",
 	}
+	userInfo := auth.BuildRandomUserInfo()
+	jwtString, err := auth.NewJWTStringFromUserInfo(userInfo)
+	require.NoError(t, err)
 	incomeJSON, _ := json.Marshal(income)
 	testCases := []test.HTTPTestCase{
 		{Name: "POST bad data 1", Method: "POST", Path: "/api/shorten", Body: incomeJSON, ExpectedStatusCode: 400},
@@ -55,10 +67,11 @@ func TestShortenPostHandler_DataIncorrect_ShouldFail(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			buffer := bytes.NewBuffer(tc.Body)
-			req, err := http.NewRequest(tc.Method, tc.Path, buffer)
-			if err != nil {
-				t.Fatal(err)
-			}
+			req := httptest.NewRequest(tc.Method, tc.Path, buffer)
+			req.AddCookie(&http.Cookie{
+				Name:  auth.CookieName,
+				Value: jwtString,
+			})
 			recorder := httptest.NewRecorder()
 			router.GetRouter().ServeHTTP(recorder, req)
 

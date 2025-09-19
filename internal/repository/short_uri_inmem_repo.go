@@ -1,30 +1,45 @@
 package repository
 
 import (
+	"context"
 	"errors"
 
 	_db "github.com/ElfAstAhe/url-shortener/internal/config/db"
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
+	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
 	"github.com/google/uuid"
 )
 
 type shortURIInMemRepo struct {
-	Cache _db.InMemoryCache
+	Cache    _db.InMemoryCache
+	userRepo ShortURIUserRepository
 }
 
-func newShortURIInMemRepo(db _db.DB) (ShortURIRepository, error) {
+func newShortURIInMemRepo(db _db.DB) (*shortURIInMemRepo, error) {
 	if cache, ok := db.(_db.InMemoryCache); ok {
+		userRepo, err := NewShortURIUserRepository(db)
+		if err != nil {
+			return nil, err
+		}
+
 		return &shortURIInMemRepo{
-			Cache: cache,
+			Cache:    cache,
+			userRepo: userRepo,
 		}, nil
 	}
 
 	return nil, errors.New("db param does not implement InMemoryCache")
 }
 
-func (imr *shortURIInMemRepo) Get(id string) (*_model.ShortURI, error) {
-	for _, value := range imr.Cache.GetShortURICache() {
-		if value.ID == id {
+func (ims *shortURIInMemRepo) Get(ctx context.Context, id string) (*_model.ShortURI, error) {
+	res := ims.Cache.GetShortURICache()[id]
+
+	return res, nil
+}
+
+func (ims *shortURIInMemRepo) GetByKey(ctx context.Context, key string) (*_model.ShortURI, error) {
+	for _, value := range ims.Cache.GetShortURICache() {
+		if value.Key == key {
 			return value, nil
 		}
 	}
@@ -32,64 +47,114 @@ func (imr *shortURIInMemRepo) Get(id string) (*_model.ShortURI, error) {
 	return nil, nil
 }
 
-func (imr *shortURIInMemRepo) GetByKey(key string) (*_model.ShortURI, error) {
-	res := imr.Cache.GetShortURICache()[key]
-
-	return res, nil
-}
-
-func (imr *shortURIInMemRepo) Create(shortURI *_model.ShortURI) (*_model.ShortURI, error) {
-	if shortURI == nil {
-		return nil, errors.New("shortURI is nil")
-	}
-	if shortURI.Key == "" {
-		return nil, errors.New("shortURI Key is empty")
+func (ims *shortURIInMemRepo) Create(ctx context.Context, entity *_model.ShortURI) (*_model.ShortURI, error) {
+	if err := _model.ValidateShortURI(entity); err != nil {
+		return nil, err
 	}
 
-	founded, err := imr.GetByKey(shortURI.Key)
+	userInfo, err := _auth.UserInfoFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if founded != nil {
-		return founded, errors.New("short URI already exists")
+
+	find, err := ims.GetByKey(ctx, entity.Key)
+	if err != nil {
+		return nil, err
+	}
+	if find != nil {
+		if err := ims.addUser(ctx, find.ID, userInfo.UserID); err != nil {
+			return nil, err
+		}
+
+		return find, errors.New("short URI already exists")
 	}
 
 	newID, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
 	}
-	shortURI.ID = newID.String()
+	entity.ID = newID.String()
 
-	imr.Cache.GetShortURICache()[shortURI.Key] = shortURI
+	ims.Cache.GetShortURICache()[entity.ID] = entity
 
-	return shortURI, nil
-}
-
-func (imr *shortURIInMemRepo) BatchCreate(batch map[string]*_model.ShortURI) (map[string]*_model.ShortURI, error) {
-	if len(batch) == 0 {
-		return batch, nil
+	if err := ims.addUser(ctx, entity.ID, userInfo.UserID); err != nil {
+		return nil, err
 	}
 
-	res := make(map[string]*_model.ShortURI)
-	for correlation, item := range batch {
-		// searching
-		find, err := imr.GetByKey(item.Key)
-		if err != nil {
-			return nil, err
-		}
-		// founded
-		if find != nil {
-			res[correlation] = find
+	return entity, nil
+}
 
-			continue
-		}
-		// new one
-		data, err := imr.Create(item)
-		if err != nil {
+func (ims *shortURIInMemRepo) BatchCreate(ctx context.Context, batch map[string]*_model.ShortURI) (map[string]*_model.ShortURI, error) {
+	res := make(map[string]*_model.ShortURI)
+	if len(batch) == 0 {
+		return res, nil
+	}
+
+	if _, err := _auth.UserInfoFromContext(ctx); err != nil {
+		return nil, err
+	}
+
+	for correlation, item := range batch {
+		data, err := ims.Create(ctx, item)
+		if err != nil && data == nil {
 			return nil, err
 		}
 		res[correlation] = data
 	}
 
 	return res, nil
+}
+
+func (ims *shortURIInMemRepo) ListAllByUser(ctx context.Context, userID string) ([]*_model.ShortURI, error) {
+	if userID == "" {
+		return nil, nil
+	}
+	// all shorten ids by user
+	entityUserLinks, err := ims.userRepo.ListAllByUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return ims.listAllByLinks(ctx, entityUserLinks)
+}
+
+func (ims *shortURIInMemRepo) listAllByLinks(ctx context.Context, userLinks []*_model.ShortURIUser) ([]*_model.ShortURI, error) {
+	res := make([]*_model.ShortURI, 0)
+	if len(userLinks) == 0 {
+		return res, nil
+	}
+	for _, userLink := range userLinks {
+		find, err := ims.Get(ctx, userLink.ShortURIID)
+		if err != nil {
+			return nil, err
+		}
+		if find != nil {
+			res = append(res, find)
+		}
+	}
+
+	return res, nil
+}
+
+func (ims *shortURIInMemRepo) addUser(ctx context.Context, ID string, userID string) error {
+	find, err := ims.userRepo.GetByUnique(ctx, userID, ID)
+	if err != nil {
+		return err
+	}
+	if find != nil {
+		return nil
+	}
+
+	entity, err := _model.NewShortURIUser(ID, userID)
+	if err != nil {
+		return err
+	}
+
+	res, err := ims.userRepo.Create(ctx, entity)
+
+	if err != nil && res == nil {
+		return err
+	}
+
+	return nil
 }
