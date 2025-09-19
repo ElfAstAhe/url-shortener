@@ -14,13 +14,6 @@ const ExpectedOriginalURL = "http://localhost:8080/test/data"
 const ExpectedKey = "8fe59a11923ca3ea1b7118818e3a7b3c"
 const ExpectedID = "123"
 
-const (
-	testUserID  string = "testUserID"
-	testUser    string = "testUser"
-	testAdminID string = "testAdminID"
-	testAdmin   string = "testAdmin"
-)
-
 var testRoles auth.Roles = auth.Roles{
 	"userRole1", "userRole2", "userRole3",
 }
@@ -71,14 +64,6 @@ func (rm *repoMock) buildModel() *model.ShortURI {
 	return data
 }
 
-func (rm *repoMock) buildUser() *auth.UserInfo {
-	return auth.NewUserInfo(false, testUserID, testUser, testRoles)
-}
-
-func (rm *repoMock) buildAdminUser() *auth.UserInfo {
-	return auth.NewUserInfo(true, testAdminID, testAdmin, testAdminRoles)
-}
-
 func TestShorterService_store_shouldReturnKey(t *testing.T) {
 	t.Run("should return key", func(t *testing.T) {
 		service, err := NewShorterService(&repoMock{})
@@ -93,7 +78,7 @@ func TestShorterService_store_shouldReturnKey(t *testing.T) {
 func TestNewShorterService_getDataExists_shouldReturnURL(t *testing.T) {
 	t.Run("should return URL", func(t *testing.T) {
 		repo := &repoMock{}
-		ctx := context.WithValue(context.Background(), "UserInfo", repo.buildUser())
+		ctx := context.WithValue(context.Background(), auth.ContextUserInfo, auth.BuildUnknownUserInfo())
 		service, err := NewShorterService(repo)
 		require.NoError(t, err)
 		actual, err := service.GetURL(ctx, ExpectedKey)
@@ -107,7 +92,7 @@ func TestNewShorterService_getDataExists_shouldReturnURL(t *testing.T) {
 func TestNewShorterService_getDataNotExists_shouldReturnEmpty(t *testing.T) {
 	t.Run("should return empty", func(t *testing.T) {
 		repo := &repoMock{}
-		ctx := context.WithValue(context.Background(), "UserInfo", repo.buildUser())
+		ctx := context.WithValue(context.Background(), auth.ContextUserInfo, auth.BuildUnknownUserInfo())
 		service, err := NewShorterService(repo)
 		require.NoError(t, err)
 		actual, err := service.GetURL(ctx, "22")
