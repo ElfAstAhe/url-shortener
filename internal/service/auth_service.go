@@ -1,8 +1,8 @@
 package service
 
-type Roles []string
+import _auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
 
 type AuthService interface {
 	Authenticate(user, password string) (bool, error)
-	Authorize(user string) (Roles, error)
+	Authorize(user string) (_auth.Roles, error)
 }

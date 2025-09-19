@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
@@ -23,7 +24,7 @@ func newShortURIUserInMemRepo(db _db.DB) (*shortURIUserInMemRepo, error) {
 	return nil, errors.New("db param does not implement InMemoryCache")
 }
 
-func (imsu *shortURIUserInMemRepo) Get(ID string) (*_model.ShortURIUser, error) {
+func (imsu *shortURIUserInMemRepo) Get(ctx context.Context, ID string) (*_model.ShortURIUser, error) {
 	if ID == "" {
 		return nil, nil
 	}
@@ -31,7 +32,7 @@ func (imsu *shortURIUserInMemRepo) Get(ID string) (*_model.ShortURIUser, error) 
 	return imsu.Cache.GetShortURIUserCache()[ID], nil
 }
 
-func (imsu *shortURIUserInMemRepo) GetByUnique(userID string, shortURIID string) (*_model.ShortURIUser, error) {
+func (imsu *shortURIUserInMemRepo) GetByUnique(ctx context.Context, userID string, shortURIID string) (*_model.ShortURIUser, error) {
 	if userID == "" || shortURIID == "" {
 		return nil, nil
 	}
@@ -45,7 +46,7 @@ func (imsu *shortURIUserInMemRepo) GetByUnique(userID string, shortURIID string)
 	return nil, nil
 }
 
-func (imsu *shortURIUserInMemRepo) ListAllByUser(userID string) ([]*_model.ShortURIUser, error) {
+func (imsu *shortURIUserInMemRepo) ListAllByUser(ctx context.Context, userID string) ([]*_model.ShortURIUser, error) {
 	res := make([]*_model.ShortURIUser, 0)
 	if userID == "" || len(imsu.Cache.GetShortURIUserCache()) == 0 {
 		return res, nil
@@ -60,7 +61,7 @@ func (imsu *shortURIUserInMemRepo) ListAllByUser(userID string) ([]*_model.Short
 	return res, nil
 }
 
-func (imsu *shortURIUserInMemRepo) ListAllByShortURI(shortURIID string) ([]*_model.ShortURIUser, error) {
+func (imsu *shortURIUserInMemRepo) ListAllByShortURI(ctx context.Context, shortURIID string) ([]*_model.ShortURIUser, error) {
 	res := make([]*_model.ShortURIUser, 0)
 	if shortURIID == "" || len(imsu.Cache.GetShortURIUserCache()) == 0 {
 		return res, nil
@@ -75,11 +76,11 @@ func (imsu *shortURIUserInMemRepo) ListAllByShortURI(shortURIID string) ([]*_mod
 	return res, nil
 }
 
-func (imsu *shortURIUserInMemRepo) CreateTran(tx *sql.Tx, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
-	return imsu.Create(entity)
+func (imsu *shortURIUserInMemRepo) CreateTran(ctx context.Context, tx *sql.Tx, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
+	return imsu.Create(ctx, entity)
 }
 
-func (imsu *shortURIUserInMemRepo) Create(entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
+func (imsu *shortURIUserInMemRepo) Create(ctx context.Context, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
 	if err := _model.ValidateShortURIUser(entity); err != nil {
 		return nil, err
 	}

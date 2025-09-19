@@ -6,15 +6,15 @@ import (
 	"net/http"
 	"time"
 
-	_srv "github.com/ElfAstAhe/url-shortener/internal/service"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 )
 
 type AppClaims struct {
 	jwt.RegisteredClaims
-	Roles  []string `json:"roles,omitempty"`
-	User   string   `json:"user,omitempty"`
-	UserID string   `json:"user_id,omitempty"`
+	Admin  bool   `json:"admin,omitempty"`
+	UserID string `json:"user_id,omitempty"`
+	Roles  Roles  `json:"roles,omitempty"`
 }
 
 const secretKey = "secret-key"
@@ -25,13 +25,13 @@ const TestUserID = "test_user_id"
 
 const Cookie = "Authorization"
 
-var TestRoles _srv.Roles = []string{
+var TestRoles Roles = []string{
 	"test_role1",
 	"test_role2",
 }
 
-func NewTokenString(userID string, user string, roles ...string) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, newAppClaims(userID, user, roles...))
+func NewTokenString(admin bool, userID string, user string, roles ...string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, newAppClaims(admin, userID, user, roles...))
 
 	res, err := token.SignedString([]byte(secretKey))
 	if err != nil {
@@ -41,35 +41,29 @@ func NewTokenString(userID string, user string, roles ...string) (string, error)
 	return res, nil
 }
 
-func newAppClaims(userID string, user string, roles ...string) *AppClaims {
+func newAppClaims(admin bool, userID string, user string, roles ...string) *AppClaims {
 	return &AppClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        buildUniqueTokenID(),
+			Issuer:    "url-shortener",
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(timeExpirationDuration)),
+			Subject:   user,
 		},
+		Admin:  admin,
 		UserID: userID,
-		User:   user,
 		Roles:  roles,
 	}
 }
 
-func GetUserID(r *http.Request) (string, error) {
-	if r == nil {
-		return "", nil
-	}
-
-	token, err := getAuthToken(r)
+func buildUniqueTokenID() string {
+	const template = "shortener-token-%v"
+	randID, err := uuid.NewRandom()
 	if err != nil {
-		return "", err
-	}
-	if token == nil {
-		return "", nil
+		return fmt.Sprintf(template, time.Now().Nanosecond())
 	}
 
-	if !token.Valid {
-		return "", errors.New("invalid jwt token")
-	}
-
-	return token.Claims.(*AppClaims).UserID, nil
+	return fmt.Sprintf(template, randID.String())
 }
 
 func getAuthToken(r *http.Request) (*jwt.Token, error) {
@@ -94,4 +88,27 @@ func getAuthToken(r *http.Request) (*jwt.Token, error) {
 	}
 
 	return token, nil
+}
+
+func UserInfoFromRequestJWT(r *http.Request) (*UserInfo, error) {
+	jwtToken, err := getAuthToken(r)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := UserInfoFromJWT(jwtToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func UserInfoFromJWT(jwt *jwt.Token) (*UserInfo, error) {
+	claims, ok := jwt.Claims.(*AppClaims)
+	if !ok {
+		return nil, errors.New("user info absent")
+	}
+
+	return NewUserInfo(claims.Admin, claims.UserID, claims.Subject, claims.Roles), nil
 }

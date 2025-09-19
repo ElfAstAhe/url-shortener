@@ -10,7 +10,8 @@ import (
 )
 
 func (cr *chiRouter) userUrlsHandler(rw http.ResponseWriter, r *http.Request) {
-	userID, err := _auth.GetUserID(r)
+	userInfo, err := _auth.UserInfoFromRequestJWT(r)
+
 	if err != nil {
 		message := fmt.Sprintf("error getting user id: [%v]", err)
 		cr.log.Error(message)

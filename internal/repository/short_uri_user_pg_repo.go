@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
@@ -30,7 +31,7 @@ func newShortURIUserPgRepo(db _db.DB) (*shortURIUserPgRepo, error) {
 	return &shortURIUserPgRepo{db: db}, nil
 }
 
-func (pgsu *shortURIUserPgRepo) Get(ID string) (*_model.ShortURIUser, error) {
+func (pgsu *shortURIUserPgRepo) Get(ctx context.Context, ID string) (*_model.ShortURIUser, error) {
 	row := pgsu.db.GetDB().QueryRow(getShortURIUserSQL, ID)
 	if row.Err() != nil && !errors.Is(row.Err(), sql.ErrNoRows) {
 		return nil, nil
@@ -48,7 +49,7 @@ func (pgsu *shortURIUserPgRepo) Get(ID string) (*_model.ShortURIUser, error) {
 	return &result, nil
 }
 
-func (pgsu *shortURIUserPgRepo) GetByUnique(userID string, shortURIID string) (*_model.ShortURIUser, error) {
+func (pgsu *shortURIUserPgRepo) GetByUnique(ctx context.Context, userID string, shortURIID string) (*_model.ShortURIUser, error) {
 	row := pgsu.db.GetDB().QueryRow(getShortURIUserByUniqueSQL, userID, shortURIID)
 	if row.Err() != nil && !errors.Is(row.Err(), sql.ErrNoRows) {
 		return nil, nil
@@ -66,7 +67,7 @@ func (pgsu *shortURIUserPgRepo) GetByUnique(userID string, shortURIID string) (*
 	return &result, nil
 }
 
-func (pgsu *shortURIUserPgRepo) ListAllByUser(userID string) ([]*_model.ShortURIUser, error) {
+func (pgsu *shortURIUserPgRepo) ListAllByUser(ctx context.Context, userID string) ([]*_model.ShortURIUser, error) {
 	res := make([]*_model.ShortURIUser, 0)
 	rows, err := pgsu.db.GetDB().Query(listShortURIUserAllByUserSQL, userID)
 	if err != nil {
@@ -91,7 +92,7 @@ func (pgsu *shortURIUserPgRepo) ListAllByUser(userID string) ([]*_model.ShortURI
 	return res, nil
 }
 
-func (pgsu *shortURIUserPgRepo) ListAllByShortURI(shortURIID string) ([]*_model.ShortURIUser, error) {
+func (pgsu *shortURIUserPgRepo) ListAllByShortURI(ctx context.Context, shortURIID string) ([]*_model.ShortURIUser, error) {
 	res := make([]*_model.ShortURIUser, 0)
 	rows, err := pgsu.db.GetDB().Query(listShortURIUserAllByShortURISQL, shortURIID)
 	if err != nil {
@@ -116,12 +117,12 @@ func (pgsu *shortURIUserPgRepo) ListAllByShortURI(shortURIID string) ([]*_model.
 	return res, nil
 }
 
-func (pgsu *shortURIUserPgRepo) Create(entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
+func (pgsu *shortURIUserPgRepo) Create(ctx context.Context, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
 	if err := _model.ValidateShortURIUser(entity); err != nil {
 		return nil, err
 	}
 
-	find, err := pgsu.GetByUnique(entity.UserID, entity.ShortURIID)
+	find, err := pgsu.GetByUnique(ctx, entity.UserID, entity.ShortURIID)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +136,7 @@ func (pgsu *shortURIUserPgRepo) Create(entity *_model.ShortURIUser) (*_model.Sho
 	}
 	defer _utl.CloseOnly(stmt)
 
-	res, err := internalCreateShortURIUser(stmt, entity)
+	res, err := pgsu.internalCreate(ctx, stmt, entity)
 	if err != nil {
 		return nil, err
 	}
@@ -143,12 +144,12 @@ func (pgsu *shortURIUserPgRepo) Create(entity *_model.ShortURIUser) (*_model.Sho
 	return res, nil
 }
 
-func (pgsu *shortURIUserPgRepo) CreateTran(tx *sql.Tx, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
+func (pgsu *shortURIUserPgRepo) CreateTran(ctx context.Context, tx *sql.Tx, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
 	if err := _model.ValidateShortURIUser(entity); err != nil {
 		return nil, err
 	}
 
-	find, err := pgsu.GetByUnique(entity.UserID, entity.ShortURIID)
+	find, err := pgsu.GetByUnique(ctx, entity.UserID, entity.ShortURIID)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +163,7 @@ func (pgsu *shortURIUserPgRepo) CreateTran(tx *sql.Tx, entity *_model.ShortURIUs
 	}
 	defer _utl.CloseOnly(stmt)
 
-	res, err := internalCreateShortURIUser(stmt, entity)
+	res, err := pgsu.internalCreate(ctx, stmt, entity)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +171,7 @@ func (pgsu *shortURIUserPgRepo) CreateTran(tx *sql.Tx, entity *_model.ShortURIUs
 	return res, nil
 }
 
-func internalCreateShortURIUser(stmt *sql.Stmt, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
+func (pgsu *shortURIUserPgRepo) internalCreate(ctx context.Context, stmt *sql.Stmt, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
 	newID, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err

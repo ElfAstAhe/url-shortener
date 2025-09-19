@@ -9,7 +9,7 @@ import (
 type inMemoryDB struct {
 	DBKind string
 
-	// ShortURI map key is short uri entity key attribute
+	// ShortURI map key is short uri entity id attribute
 	ShortURI map[string]*_model.ShortURI
 
 	// ShortURIAudit map key is short uri audit entity id attribute

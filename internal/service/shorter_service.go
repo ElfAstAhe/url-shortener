@@ -1,5 +1,7 @@
 package service
 
+import "context"
+
 type CorrelationUrls map[string]string
 
 type CorrelationShorts map[string]string
@@ -9,14 +11,14 @@ type UserShorts map[string]string
 // ShorterService app service
 type ShorterService interface {
 	// GetURL return full URL
-	GetURL(key string) (string, error)
+	GetURL(ctx context.Context, key string) (string, error)
 
 	// Store URL and return short key
-	Store(url string, userID string) (string, error)
+	Store(ctx context.Context, url string) (string, error)
 
 	// BatchStore URLs and return correlation shorts
-	BatchStore(source CorrelationUrls) (CorrelationShorts, error)
+	BatchStore(ctx context.Context, source CorrelationUrls) (CorrelationShorts, error)
 
 	// GetAllUserShorts return all user shorten urls
-	GetAllUserShorts(userID string) (UserShorts, error)
+	GetAllUserShorts(ctx context.Context, userID string) (UserShorts, error)
 }
