@@ -3,19 +3,34 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
 	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
 	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
+	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
 )
 
 func (cr *chiRouter) userUrlsHandler(rw http.ResponseWriter, r *http.Request) {
 	userInfo, err := _auth.UserInfoFromRequestJWT(r)
 	if err != nil {
+		if errors.As(err, &_err.AppAuthInfoAbsentError{}) {
+			message := fmt.Sprintf("User info absent from app auth cookie [%v]", err)
+			cr.log.Warn(message)
+
+			if err := cr.iter14ProcessUnauthorized(rw, ""); err != nil {
+				message := fmt.Sprintf("error send unauthorized [%v]", err)
+				cr.log.Error(message)
+			}
+
+			return
+		}
+
+		// default action
 		// Attention!!! For iteration 14 ONLY, remove in future!
 		message := fmt.Sprintf("userInfoFromRequestJWT error: [%v]", err)
-		cr.log.Error(message)
+		cr.log.Warn(message)
 		if err := cr.iter14ProcessNoContent(rw, message); err != nil {
 			message := fmt.Sprintf("process unauthorized error: [%v]", err)
 			cr.log.Error(message)

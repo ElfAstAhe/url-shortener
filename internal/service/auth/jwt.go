@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 )
@@ -72,10 +73,10 @@ func buildUniqueTokenID() string {
 func retrieveJWT(r *http.Request) (*jwt.Token, error) {
 	cookie, _ := r.Cookie(CookieName)
 	if cookie == nil {
-		return nil, fmt.Errorf("no cookie found with name [%s]", CookieName)
+		return nil, _err.NewAppAuthCookieAbsentError(CookieName, nil)
 	}
 	if err := cookie.Valid(); err != nil {
-		return nil, err
+		return nil, _err.NewAppAuthCookieAbsentError("invalid cookie", err)
 	}
 
 	claims := &AppClaims{}
@@ -87,7 +88,7 @@ func retrieveJWT(r *http.Request) (*jwt.Token, error) {
 		return []byte(secretKey), nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, _err.NewAppAuthInfoAbsentError("error parsing token", err)
 	}
 
 	return token, nil
@@ -97,6 +98,10 @@ func UserInfoFromRequestJWT(r *http.Request) (*UserInfo, error) {
 	jwtToken, err := retrieveJWT(r)
 	if err != nil {
 		return nil, err
+	}
+
+	if !jwtToken.Valid {
+		return nil, _err.NewAppAuthInfoAbsentError("JWT is invalid", nil)
 	}
 
 	res, err := UserInfoFromJWT(jwtToken)
