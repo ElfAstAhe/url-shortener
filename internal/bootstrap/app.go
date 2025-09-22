@@ -168,6 +168,16 @@ func (app *App) loadShortURIData(storagePath string, cache _db.InMemoryCache) er
 	return storageReader.LoadData(cache.GetShortURICache())
 }
 
+func (app *App) loadShortURIUserData(storagePath string, cache _db.InMemoryCache) error {
+	storageReader, err := _storage.NewShortURIUserStorageReader(storagePath)
+	if err != nil {
+		return err
+	}
+	defer _utl.CloseOnly(storageReader)
+
+	return storageReader.LoadData(cache.GetShortURIUserCache())
+}
+
 func (app *App) saveShortURIData(storagePath string, cache _db.InMemoryCache) error {
 	storageWriter, err := _storage.NewShortURLStorageWriter(storagePath)
 	if err != nil {
@@ -176,4 +186,14 @@ func (app *App) saveShortURIData(storagePath string, cache _db.InMemoryCache) er
 	defer _utl.CloseOnly(storageWriter)
 
 	return storageWriter.SaveData(cache.GetShortURICache())
+}
+
+func (app *App) saveShortURIUserData(storagePath string, cache _db.InMemoryCache) error {
+	storageWriter, err := _storage.NewShortURIUserStorageWriter(storagePath)
+	if err != nil {
+		return err
+	}
+	defer _utl.CloseOnly(storageWriter)
+
+	return storageWriter.SaveData(cache.GetShortURIUserCache())
 }

@@ -10,6 +10,7 @@ type ShortURIUser struct {
 	ID         string `db:"id" json:"id"`
 	ShortURIID string `db:"short_uri_id" json:"short_uri_id"`
 	UserID     string `db:"user_id" json:"user_id"`
+	Deleted    bool   `db:"deleted" json:"deleted"`
 }
 
 func NewShortURIUser(shortURIID string, userID string) (*ShortURIUser, error) {

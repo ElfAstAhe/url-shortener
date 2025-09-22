@@ -74,7 +74,8 @@ func (cr *chiRouter) buildRoutes(router *chi.Mux) {
 		r.Route("/user", func(r chi.Router) {
 			// urls sub router
 			r.Route("/urls", func(r chi.Router) {
-				r.Get("/", cr.userUrlsHandler) // GET /api/user/urls
+				r.Get("/", cr.userUrlsGetHandler)       // GET /api/user/urls
+				r.Delete("/", cr.userUrlsDeleteHandler) // DELETE /api/user/urls
 			})
 		})
 	})

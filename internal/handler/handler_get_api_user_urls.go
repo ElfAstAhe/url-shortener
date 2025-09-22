@@ -12,7 +12,7 @@ import (
 	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
 )
 
-func (cr *chiRouter) userUrlsHandler(rw http.ResponseWriter, r *http.Request) {
+func (cr *chiRouter) userUrlsGetHandler(rw http.ResponseWriter, r *http.Request) {
 	userInfo, err := _auth.UserInfoFromRequestJWT(r)
 	if err != nil {
 		if errors.As(err, &_err.AppAuthInfoAbsentError{}) {
