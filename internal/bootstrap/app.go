@@ -103,6 +103,12 @@ func (app *App) initCacheData() error {
 			app.log.Errorf("Error loading data: [%v]", err)
 			app.log.Warn("Using empty data storage")
 		}
+
+		app.log.Info("Load data from storage user...")
+		if err := app.loadShortURIUserData(_cfg.AppConfig.StorageUserPath, cache); err != nil {
+			app.log.Errorf("Error loading data: [%v]", err)
+			app.log.Warn("Using empty data storage")
+		}
 	}
 
 	return nil
@@ -146,6 +152,9 @@ func (app *App) gracefulShutdown() {
 	if cache, ok := app.DB.(_db.InMemoryCache); ok {
 		if err := app.saveShortURIData(_cfg.AppConfig.StoragePath, cache); err != nil {
 			app.log.Errorf("Error save shortURI data: [%v]", err)
+		}
+		if err := app.saveShortURIUserData(_cfg.AppConfig.StorageUserPath, cache); err != nil {
+			app.log.Errorf("Error save shortURI user data: [%v]", err)
 		}
 	}
 

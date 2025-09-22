@@ -14,40 +14,45 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/caarlos0/env/v6"
 	"go.uber.org/zap"
 )
 
 type Config struct {
-	AppName      string      `json:"app_name,omitempty"`
-	ProjectStage string      `json:"project_stage,omitempty"`
-	LogLevel     string      `json:"log_level,omitempty"`
-	BaseURL      string      `json:"base_url,omitempty" env:"BASE_URL"`
-	HTTP         *HTTPConfig `json:"http,omitempty"`
-	DBKind       string      `json:"db_kind,omitempty"`
-	DBDsn        string      `json:"db_dsn,omitempty" env:"DATABASE_DSN"`
-	StoragePath  string      `json:"storage_path,omitempty" env:"FILE_STORAGE_PATH"`
+	onceLoad        sync.Once
+	AppName         string      `json:"app_name,omitempty"`
+	ProjectStage    string      `json:"project_stage,omitempty"`
+	LogLevel        string      `json:"log_level,omitempty"`
+	BaseURL         string      `json:"base_url,omitempty" env:"BASE_URL"`
+	HTTP            *HTTPConfig `json:"http,omitempty"`
+	DBKind          string      `json:"db_kind,omitempty"`
+	DBDsn           string      `json:"db_dsn,omitempty" env:"DATABASE_DSN"`
+	StoragePath     string      `json:"storage_path,omitempty" env:"FILE_STORAGE_PATH"`
+	StorageUserPath string      `json:"storage_user_path,omitempty" env:"FILE_STORAGE_USER_PATH"`
 }
 
 // Flags
 const (
-	FlagAppName       = "p"
-	FlagProjectStage  = "s"
-	FlagLogLevel      = "l"
-	FlagBaseURL       = "b"
-	FlagDBKind        = "k"
-	FlagHTTPInterface = "a"
-	FlagDBInterface   = "d"
-	FlagStoragePath   = "f"
+	FlagAppName         string = "p"
+	FlagProjectStage    string = "s"
+	FlagLogLevel        string = "l"
+	FlagBaseURL         string = "b"
+	FlagDBKind          string = "k"
+	FlagHTTPInterface   string = "a"
+	FlagDBInterface     string = "d"
+	FlagStoragePath     string = "f"
+	FlagStorageUserPath string = "fu"
 )
 
 // Environment variables
 const (
-	EnvBaseURL         = "BASE_URL"
-	EnvHTTPInterface   = "SERVER_ADDR"
-	EnvStorageFilename = "FILE_STORAGE_PATH"
-	EnvDatabaseDSN     = "DATABASE_DSN"
+	EnvBaseURL             string = "BASE_URL"
+	EnvHTTPInterface       string = "SERVER_ADDR"
+	EnvStorageFilename     string = "FILE_STORAGE_PATH"
+	EnvStorageUserFilename string = "FILE_STORAGE_USER_PATH"
+	EnvDatabaseDSN         string = "DATABASE_DSN"
 )
 
 var AppConfig *Config
@@ -146,4 +151,5 @@ func (c *Config) initFlags() {
 	flag.Var(c.HTTP, FlagHTTPInterface, "http interface")
 	flag.StringVar(&c.DBDsn, FlagDBInterface, DefaultDBDsn, "database dsn")
 	flag.StringVar(&c.StoragePath, FlagStoragePath, DefaultStoragePath, "storage path")
+	flag.StringVar(&c.StorageUserPath, FlagStorageUserPath, DefaultStorageUserPath, "storage user path")
 }
