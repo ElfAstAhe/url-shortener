@@ -8,6 +8,9 @@ type CorrelationShorts map[string]string
 
 type UserShorts map[string]string
 
+// UserBatchDeletes key is user id values is short uri keys
+type UserBatchDeletes []string
+
 // ShorterService app service
 type ShorterService interface {
 	// GetURL return full URL
@@ -21,4 +24,7 @@ type ShorterService interface {
 
 	// GetAllUserShorts return all user shorten urls
 	GetAllUserShorts(ctx context.Context, userID string) (UserShorts, error)
+
+	// BatchDelete remove short uris by user id
+	BatchDelete(ctx context.Context, data UserBatchDeletes) error
 }

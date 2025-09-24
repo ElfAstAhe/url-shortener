@@ -6,11 +6,17 @@ import (
 	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
 	_repo "github.com/ElfAstAhe/url-shortener/internal/repository"
+	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
 	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
 )
 
 type Shorter struct {
 	Repository _repo.ShortURIRepository
+}
+
+func (s *Shorter) BatchDelete(ctx context.Context, data UserBatchDeletes) error {
+	//TODO implement me
+	panic("implement me")
 }
 
 func NewShorterService(repo _repo.ShortURIRepository) (*Shorter, error) {
@@ -22,7 +28,11 @@ func NewShorterService(repo _repo.ShortURIRepository) (*Shorter, error) {
 // ShorterService
 
 func (s *Shorter) GetURL(ctx context.Context, key string) (string, error) {
-	model, err := s.Repository.GetByKey(ctx, key)
+	userInfo, err := _auth.UserInfoFromContext(ctx)
+	if err != nil {
+		return "", err
+	}
+	model, err := s.Repository.GetByKeyUser(ctx, userInfo.UserID, key)
 	if err != nil {
 		return "", err
 	}

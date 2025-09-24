@@ -95,3 +95,13 @@ func (imsu *shortURIUserInMemRepo) Create(ctx context.Context, entity *_model.Sh
 
 	return entity, nil
 }
+
+func (imsu *shortURIUserInMemRepo) Change(ctx context.Context, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
+	if err := _model.ValidateShortURIUser(entity); err != nil {
+		return nil, err
+	}
+
+	imsu.Cache.GetShortURIUserCache()[entity.ID] = entity
+
+	return entity, nil
+}

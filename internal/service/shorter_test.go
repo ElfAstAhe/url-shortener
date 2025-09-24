@@ -24,6 +24,20 @@ var testAdminRoles auth.Roles = auth.Roles{
 type repoMock struct {
 }
 
+func (rm *repoMock) GetByKeyUser(ctx context.Context, userID string, key string) (*model.ShortURI, error) {
+	if key == "" {
+		return nil, nil
+	}
+	if userID == "" {
+		return nil, nil
+	}
+	data := rm.buildModel()
+	if data.Key == key {
+		return data, nil
+	}
+	return nil, nil
+}
+
 func (rm *repoMock) ListAllByUser(ctx context.Context, userID string) ([]*model.ShortURI, error) {
 	//TODO implement me
 	panic("implement me")

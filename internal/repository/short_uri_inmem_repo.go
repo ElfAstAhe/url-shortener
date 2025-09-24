@@ -7,6 +7,7 @@ import (
 	_db "github.com/ElfAstAhe/url-shortener/internal/config/db"
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
 	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
+	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
 	"github.com/google/uuid"
 )
 
@@ -38,6 +39,10 @@ func (ims *shortURIInMemRepo) Get(ctx context.Context, id string) (*_model.Short
 }
 
 func (ims *shortURIInMemRepo) GetByKey(ctx context.Context, key string) (*_model.ShortURI, error) {
+	if key == "" {
+		return nil, nil
+	}
+
 	for _, value := range ims.Cache.GetShortURICache() {
 		if value.Key == key {
 			return value, nil
@@ -45,6 +50,31 @@ func (ims *shortURIInMemRepo) GetByKey(ctx context.Context, key string) (*_model
 	}
 
 	return nil, nil
+}
+
+func (ims *shortURIInMemRepo) GetByKeyUser(ctx context.Context, userID string, key string) (*_model.ShortURI, error) {
+	if userID == "" {
+		return nil, nil
+	}
+	if key == "" {
+		return nil, nil
+	}
+	entity, err := ims.GetByKey(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+	userLink, err := ims.userRepo.GetByUnique(ctx, userID, entity.ID)
+	if err != nil {
+		return nil, err
+	}
+	if userLink == nil {
+		return nil, nil
+	}
+	if userLink.Deleted {
+		return nil, _err.NewAppSoftRemovedError("short_uri", nil)
+	}
+
+	return entity, nil
 }
 
 func (ims *shortURIInMemRepo) Create(ctx context.Context, entity *_model.ShortURI) (*_model.ShortURI, error) {

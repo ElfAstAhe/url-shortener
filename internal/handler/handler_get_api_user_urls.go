@@ -15,7 +15,7 @@ import (
 func (cr *chiRouter) userUrlsGetHandler(rw http.ResponseWriter, r *http.Request) {
 	userInfo, err := _auth.UserInfoFromRequestJWT(r)
 	if err != nil {
-		if errors.As(err, &_err.AppAuthInfoAbsentError{}) {
+		if errors.As(err, &_err.AppAuthInfoAbsent) {
 			message := fmt.Sprintf("User info absent from app auth cookie [%v]", err)
 			cr.log.Warn(message)
 

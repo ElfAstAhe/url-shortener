@@ -10,12 +10,14 @@ import (
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
 	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
 	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
+	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
 	"github.com/google/uuid"
 )
 
 const (
 	getShortURISQL           string = "select id, original_url, key from short_uris where id = $1"
 	getShortURIByKeySQL      string = "select id, original_url, key from short_uris where key = $1"
+	getShortURIByKeyUserSQL  string = `select su.id, su.original_url, su.key, suu.deleted from short_uris su inner join short_uri_users suu on suu.short_uri_id = su.id and suu.user_id = $2 where su.key = $1`
 	createShortURISQL        string = "insert into short_uris(id, original_url, key) values ($1, $2, $3)"
 	listShortURIAllByUserSQL string = `select
     s.id,
@@ -87,6 +89,36 @@ func (pgs *shortURIPgRepo) GetByKey(ctx context.Context, key string) (*_model.Sh
 		return nil, nil
 	} else if err != nil {
 		return nil, err
+	}
+
+	return &result, nil
+}
+
+func (pgs *shortURIPgRepo) GetByKeyUser(ctx context.Context, userID string, key string) (*_model.ShortURI, error) {
+	if userID == "" {
+		return nil, nil
+	}
+	if key == "" {
+		return nil, nil
+	}
+
+	row := pgs.db.GetDB().QueryRowContext(ctx, getShortURIByKeyUserSQL, key, userID)
+	if row.Err() != nil && !errors.Is(row.Err(), sql.ErrNoRows) {
+		return nil, nil
+	}
+
+	var result = _model.ShortURI{
+		OriginalURL: &_model.CustomURL{},
+	}
+	var deleted = false
+	err := row.Scan(&result.ID, &result.OriginalURL, &result.Key, &deleted)
+	if row.Err() != nil && !errors.Is(row.Err(), sql.ErrNoRows) {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+	if deleted {
+		return nil, _err.NewAppSoftRemovedError("short_uri", nil)
 	}
 
 	return &result, nil

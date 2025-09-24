@@ -7,6 +7,15 @@ type AppAuthCookieAbsentError struct {
 	Err error
 }
 
+var AppAuthCookieAbsent *AppAuthCookieAbsentError
+
+func NewAppAuthCookieAbsentError(msg string, err error) *AppAuthCookieAbsentError {
+	return &AppAuthCookieAbsentError{
+		msg: msg,
+		Err: err,
+	}
+}
+
 func (a *AppAuthCookieAbsentError) Error() string {
 	switch {
 	case a.msg != "" && a.Err != nil:
@@ -22,11 +31,4 @@ func (a *AppAuthCookieAbsentError) Error() string {
 
 func (a *AppAuthCookieAbsentError) Unwrap() error {
 	return a.Err
-}
-
-func NewAppAuthCookieAbsentError(msg string, err error) *AppAuthCookieAbsentError {
-	return &AppAuthCookieAbsentError{
-		msg: msg,
-		Err: err,
-	}
 }

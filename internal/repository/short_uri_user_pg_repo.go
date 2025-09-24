@@ -16,11 +16,12 @@ type shortURIUserPgRepo struct {
 }
 
 const (
-	getShortURIUserSQL               string = `select id, short_uri_id, user_id from short_uri_users where id = $1`
-	getShortURIUserByUniqueSQL       string = `select id, short_uri_id, user_id from short_uri_users where user_id = $1 and short_uri_id = $2`
-	listShortURIUserAllByUserSQL     string = `select id, short_uri_id, user_id from short_uri_users where user_id = $1`
-	listShortURIUserAllByShortURISQL string = `select id, short_uri_id, user_id from short_uri_users where short_uri_id = $1`
-	createShortURIUserSQL            string = `insert into short_uri_users(id, short_uri_id, user_id) values($1, $2, $3)`
+	getShortURIUserSQL               string = `select id, short_uri_id, user_id, deleted from short_uri_users where id = $1`
+	getShortURIUserByUniqueSQL       string = `select id, short_uri_id, user_id, deleted from short_uri_users where user_id = $1 and short_uri_id = $2`
+	listShortURIUserAllByUserSQL     string = `select id, short_uri_id, user_id, deleted from short_uri_users where user_id = $1`
+	listShortURIUserAllByShortURISQL string = `select id, short_uri_id, user_id, deleted from short_uri_users where short_uri_id = $1`
+	createShortURIUserSQL            string = `insert into short_uri_users(id, short_uri_id, user_id, deleted) values($1, $2, $3, $4)`
+	changeShortURIUserSQL            string = `update short_uri_users set short_uri_id=$2, user_id=$3, deleted = $4 where id = $1`
 )
 
 func newShortURIUserPgRepo(db _db.DB) (*shortURIUserPgRepo, error) {
@@ -38,8 +39,8 @@ func (pgsu *shortURIUserPgRepo) Get(ctx context.Context, ID string) (*_model.Sho
 	}
 
 	var result = _model.ShortURIUser{}
-	// id, short_uri_id, user_id
-	err := row.Scan(&result.ID, &result.ShortURIID, &result.UserID)
+	// id, short_uri_id, user_id, deleted
+	err := row.Scan(&result.ID, &result.ShortURIID, &result.UserID, &result.Deleted)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	} else if err != nil {
@@ -56,8 +57,8 @@ func (pgsu *shortURIUserPgRepo) GetByUnique(ctx context.Context, userID string, 
 	}
 
 	var result = _model.ShortURIUser{}
-	// id, short_uri_id, user_id
-	err := row.Scan(&result.ID, &result.ShortURIID, &result.UserID)
+	// id, short_uri_id, user_id, deleted
+	err := row.Scan(&result.ID, &result.ShortURIID, &result.UserID, &result.Deleted)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	} else if err != nil {
@@ -77,8 +78,8 @@ func (pgsu *shortURIUserPgRepo) ListAllByUser(ctx context.Context, userID string
 
 	for rows.Next() {
 		var result = _model.ShortURIUser{}
-		// id, short_uri_id, user_id
-		err := rows.Scan(&result.ID, &result.ShortURIID, &result.UserID)
+		// id, short_uri_id, user_id, deleted
+		err := rows.Scan(&result.ID, &result.ShortURIID, &result.UserID, &result.Deleted)
 		if err != nil {
 			return nil, err
 		}
@@ -102,8 +103,8 @@ func (pgsu *shortURIUserPgRepo) ListAllByShortURI(ctx context.Context, shortURII
 
 	for rows.Next() {
 		var result = _model.ShortURIUser{}
-		// id, short_uri_id, user_id
-		err := rows.Scan(&result.ID, &result.ShortURIID, &result.UserID)
+		// id, short_uri_id, user_id, deleted
+		err := rows.Scan(&result.ID, &result.ShortURIID, &result.UserID, &result.Deleted)
 		if err != nil {
 			return nil, err
 		}
@@ -171,6 +172,19 @@ func (pgsu *shortURIUserPgRepo) CreateTran(ctx context.Context, tx *sql.Tx, enti
 	return res, nil
 }
 
+func (pgsu *shortURIUserPgRepo) Change(ctx context.Context, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
+	if err := _model.ValidateShortURIUser(entity); err != nil {
+		return nil, err
+	}
+
+	_, err := pgsu.db.GetDB().ExecContext(ctx, changeShortURIUserSQL, entity.ID, entity.ShortURIID, entity.UserID, entity.Deleted)
+	if err != nil {
+		return nil, err
+	}
+
+	return entity, nil
+}
+
 func (pgsu *shortURIUserPgRepo) internalCreate(ctx context.Context, stmt *sql.Stmt, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
 	newID, err := uuid.NewRandom()
 	if err != nil {
@@ -178,7 +192,7 @@ func (pgsu *shortURIUserPgRepo) internalCreate(ctx context.Context, stmt *sql.St
 	}
 	entity.ID = newID.String()
 
-	_, err = stmt.Exec(entity.ID, entity.ShortURIID, entity.UserID)
+	_, err = stmt.ExecContext(ctx, entity.ID, entity.ShortURIID, entity.UserID)
 	if err != nil {
 		return nil, err
 	}

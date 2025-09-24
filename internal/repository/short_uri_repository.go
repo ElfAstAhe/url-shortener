@@ -11,6 +11,7 @@ import (
 type ShortURIRepository interface {
 	Get(ctx context.Context, id string) (*_model.ShortURI, error)
 	GetByKey(ctx context.Context, key string) (*_model.ShortURI, error)
+	GetByKeyUser(ctx context.Context, userID string, key string) (*_model.ShortURI, error)
 	Create(ctx context.Context, entity *_model.ShortURI) (*_model.ShortURI, error)
 	BatchCreate(ctx context.Context, batch map[string]*_model.ShortURI) (map[string]*_model.ShortURI, error)
 	ListAllByUser(ctx context.Context, userID string) ([]*_model.ShortURI, error)

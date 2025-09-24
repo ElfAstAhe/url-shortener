@@ -16,6 +16,9 @@ type ShortURIUserRepository interface {
 	ListAllByShortURI(ctx context.Context, shortURIID string) ([]*_model.ShortURIUser, error)
 	Create(ctx context.Context, entity *_model.ShortURIUser) (*_model.ShortURIUser, error)
 	CreateTran(ctx context.Context, tx *sql.Tx, entity *_model.ShortURIUser) (*_model.ShortURIUser, error)
+	Change(ctx context.Context, entity *_model.ShortURIUser) (*_model.ShortURIUser, error)
+	//Delete(ctx context.Context, ID string) error
+	//BatchDelete(ctx context.Context, ids []string) error
 }
 
 func NewShortURIUserRepository(db _db.DB) (ShortURIUserRepository, error) {
