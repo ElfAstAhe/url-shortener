@@ -24,6 +24,11 @@ var testAdminRoles auth.Roles = auth.Roles{
 type repoMock struct {
 }
 
+func (rm *repoMock) BatchDelete(ctx context.context.Context, userID string, ids []string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (rm *repoMock) GetByKeyUser(ctx context.Context, userID string, key string) (*model.ShortURI, error) {
 	if key == "" {
 		return nil, nil

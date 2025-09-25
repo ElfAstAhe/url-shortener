@@ -3,17 +3,23 @@ package repository
 import (
 	"context"
 	"errors"
+	"sync"
 
 	_db "github.com/ElfAstAhe/url-shortener/internal/config/db"
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
-	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
 	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
 	"github.com/google/uuid"
 )
 
+type shortURIBatchItem struct {
+	ShortURI *_model.ShortURI
+	UserID   string
+}
+
 type shortURIInMemRepo struct {
 	Cache    _db.InMemoryCache
 	userRepo ShortURIUserRepository
+	anchor   sync.RWMutex
 }
 
 func newShortURIInMemRepo(db _db.DB) (*shortURIInMemRepo, error) {
@@ -29,10 +35,12 @@ func newShortURIInMemRepo(db _db.DB) (*shortURIInMemRepo, error) {
 		}, nil
 	}
 
-	return nil, errors.New("db param does not implement InMemoryCache")
+	return nil, _err.NewAppInvalidArgument("db param does not implement InMemoryCache")
 }
 
 func (ims *shortURIInMemRepo) Get(ctx context.Context, id string) (*_model.ShortURI, error) {
+	ims.anchor.RLock()
+	defer ims.anchor.RUnlock()
 	res := ims.Cache.GetShortURICache()[id]
 
 	return res, nil
@@ -43,6 +51,8 @@ func (ims *shortURIInMemRepo) GetByKey(ctx context.Context, key string) (*_model
 		return nil, nil
 	}
 
+	ims.anchor.RLock()
+	defer ims.anchor.RUnlock()
 	for _, value := range ims.Cache.GetShortURICache() {
 		if value.Key == key {
 			return value, nil
@@ -59,10 +69,15 @@ func (ims *shortURIInMemRepo) GetByKeyUser(ctx context.Context, userID string, k
 	if key == "" {
 		return nil, nil
 	}
+
 	entity, err := ims.GetByKey(ctx, key)
 	if err != nil {
 		return nil, err
 	}
+	if entity == nil {
+		return nil, nil
+	}
+
 	userLink, err := ims.userRepo.GetByUnique(ctx, userID, entity.ID)
 	if err != nil {
 		return nil, err
@@ -77,13 +92,8 @@ func (ims *shortURIInMemRepo) GetByKeyUser(ctx context.Context, userID string, k
 	return entity, nil
 }
 
-func (ims *shortURIInMemRepo) Create(ctx context.Context, entity *_model.ShortURI) (*_model.ShortURI, error) {
+func (ims *shortURIInMemRepo) Create(ctx context.Context, userID string, entity *_model.ShortURI) (*_model.ShortURI, error) {
 	if err := _model.ValidateShortURI(entity); err != nil {
-		return nil, err
-	}
-
-	userInfo, err := _auth.UserInfoFromContext(ctx)
-	if err != nil {
 		return nil, err
 	}
 
@@ -92,7 +102,7 @@ func (ims *shortURIInMemRepo) Create(ctx context.Context, entity *_model.ShortUR
 		return nil, err
 	}
 	if find != nil {
-		if err := ims.addUser(ctx, find.ID, userInfo.UserID); err != nil {
+		if err := ims.addUser(ctx, find.ID, userID); err != nil {
 			return nil, err
 		}
 
@@ -105,27 +115,25 @@ func (ims *shortURIInMemRepo) Create(ctx context.Context, entity *_model.ShortUR
 	}
 	entity.ID = newID.String()
 
+	ims.anchor.Lock()
+	defer ims.anchor.Unlock()
 	ims.Cache.GetShortURICache()[entity.ID] = entity
 
-	if err := ims.addUser(ctx, entity.ID, userInfo.UserID); err != nil {
+	if err := ims.addUser(ctx, entity.ID, userID); err != nil {
 		return nil, err
 	}
 
 	return entity, nil
 }
 
-func (ims *shortURIInMemRepo) BatchCreate(ctx context.Context, batch map[string]*_model.ShortURI) (map[string]*_model.ShortURI, error) {
+func (ims *shortURIInMemRepo) BatchCreate(ctx context.Context, userID string, batch map[string]*_model.ShortURI) (map[string]*_model.ShortURI, error) {
 	res := make(map[string]*_model.ShortURI)
 	if len(batch) == 0 {
 		return res, nil
 	}
 
-	if _, err := _auth.UserInfoFromContext(ctx); err != nil {
-		return nil, err
-	}
-
 	for correlation, item := range batch {
-		data, err := ims.Create(ctx, item)
+		data, err := ims.Create(ctx, userID, item)
 		if err != nil && data == nil {
 			return nil, err
 		}
@@ -146,6 +154,66 @@ func (ims *shortURIInMemRepo) ListAllByUser(ctx context.Context, userID string) 
 	}
 
 	return ims.listAllByLinks(ctx, entityUserLinks)
+}
+
+func (ims *shortURIInMemRepo) ListAllByKeys(ctx context.Context, keys []string) ([]*_model.ShortURI, error) {
+	res := make([]*_model.ShortURI, 0)
+	if len(keys) == 0 {
+		return res, nil
+	}
+
+	ims.anchor.RLock()
+	defer ims.anchor.RUnlock()
+	for key, value := range ims.Cache.GetShortURICache() {
+		if value.Key == key {
+			res = append(res, value)
+		}
+	}
+
+	return res, nil
+}
+
+func (ims *shortURIInMemRepo) Delete(ctx context.Context, ID string, userID string) error {
+	if userID == "" {
+		return nil
+	}
+	if ID == "" {
+		return nil
+	}
+
+	return ims.userRepo.DeleteByUnique(ctx, userID, ID)
+}
+
+func (ims *shortURIInMemRepo) BatchDeleteByKeys(ctx context.Context, userID string, keys []string) error {
+	if userID == "" || len(keys) == 0 {
+		return nil
+	}
+	ids, err := ims.listIdsByKeys(ctx, keys)
+	if err != nil {
+		return err
+	}
+
+	return ims.BatchDeleteByKeys(ctx, userID, ids)
+}
+
+func (ims *shortURIInMemRepo) listIdsByKeys(ctx context.Context, keys []string) ([]string, error) {
+	res := make([]string, 0)
+	if len(keys) == 0 {
+		return res, nil
+	}
+
+	for _, key := range keys {
+		entity, err := ims.GetByKey(ctx, key)
+		if err != nil {
+			return nil, err
+		}
+		if entity == nil {
+			continue
+		}
+		res = append(res, entity.ID)
+	}
+
+	return res, nil
 }
 
 func (ims *shortURIInMemRepo) listAllByLinks(ctx context.Context, userLinks []*_model.ShortURIUser) ([]*_model.ShortURI, error) {

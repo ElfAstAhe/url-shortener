@@ -4,14 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"sync"
 
 	_db "github.com/ElfAstAhe/url-shortener/internal/config/db"
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
+	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
 	"github.com/google/uuid"
 )
 
 type shortURIUserInMemRepo struct {
-	Cache _db.InMemoryCache
+	Cache  _db.InMemoryCache
+	anchor sync.RWMutex
 }
 
 func newShortURIUserInMemRepo(db _db.DB) (*shortURIUserInMemRepo, error) {
@@ -29,6 +32,8 @@ func (imsu *shortURIUserInMemRepo) Get(ctx context.Context, ID string) (*_model.
 		return nil, nil
 	}
 
+	imsu.anchor.RLock()
+	defer imsu.anchor.RUnlock()
 	return imsu.Cache.GetShortURIUserCache()[ID], nil
 }
 
@@ -37,6 +42,8 @@ func (imsu *shortURIUserInMemRepo) GetByUnique(ctx context.Context, userID strin
 		return nil, nil
 	}
 
+	imsu.anchor.RLock()
+	defer imsu.anchor.RUnlock()
 	for _, entity := range imsu.Cache.GetShortURIUserCache() {
 		if entity.UserID == userID && entity.ShortURIID == shortURIID {
 			return entity, nil
@@ -52,6 +59,8 @@ func (imsu *shortURIUserInMemRepo) ListAllByUser(ctx context.Context, userID str
 		return res, nil
 	}
 
+	imsu.anchor.RLock()
+	defer imsu.anchor.RUnlock()
 	for _, entity := range imsu.Cache.GetShortURIUserCache() {
 		if entity.UserID == userID {
 			res = append(res, entity)
@@ -67,6 +76,8 @@ func (imsu *shortURIUserInMemRepo) ListAllByShortURI(ctx context.Context, shortU
 		return res, nil
 	}
 
+	imsu.anchor.RLock()
+	defer imsu.anchor.RUnlock()
 	for _, entity := range imsu.Cache.GetShortURIUserCache() {
 		if entity.ShortURIID == shortURIID {
 			res = append(res, entity)
@@ -76,13 +87,9 @@ func (imsu *shortURIUserInMemRepo) ListAllByShortURI(ctx context.Context, shortU
 	return res, nil
 }
 
-func (imsu *shortURIUserInMemRepo) CreateTran(ctx context.Context, tx *sql.Tx, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
-	return imsu.Create(ctx, entity)
-}
-
 func (imsu *shortURIUserInMemRepo) Create(ctx context.Context, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
 	if err := _model.ValidateShortURIUser(entity); err != nil {
-		return nil, err
+		return nil, _err.NewAppModelValidationError("short_uri_user", err)
 	}
 
 	newID, err := uuid.NewRandom()
@@ -91,6 +98,8 @@ func (imsu *shortURIUserInMemRepo) Create(ctx context.Context, entity *_model.Sh
 	}
 
 	entity.ID = newID.String()
+	imsu.anchor.Lock()
+	defer imsu.anchor.Unlock()
 	imsu.Cache.GetShortURIUserCache()[entity.ID] = entity
 
 	return entity, nil
@@ -98,10 +107,232 @@ func (imsu *shortURIUserInMemRepo) Create(ctx context.Context, entity *_model.Sh
 
 func (imsu *shortURIUserInMemRepo) Change(ctx context.Context, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
 	if err := _model.ValidateShortURIUser(entity); err != nil {
+		return nil, _err.NewAppModelValidationError("short_uri_user", err)
+	}
+	find, err := imsu.Get(ctx, entity.ID)
+	if err != nil {
 		return nil, err
 	}
+	if find == nil {
+		return nil, _err.NewAppModelNotFoundError(entity.ID, "short_uri_user", "")
+	}
 
+	imsu.anchor.Lock()
+	defer imsu.anchor.Unlock()
 	imsu.Cache.GetShortURIUserCache()[entity.ID] = entity
 
 	return entity, nil
+}
+
+func (imsu *shortURIUserInMemRepo) Delete(ctx context.Context, ID string) error {
+	if ID == "" {
+		return nil
+	}
+
+	find, err := imsu.Get(ctx, ID)
+	if err != nil {
+		return err
+	}
+	if find == nil {
+		return nil
+	}
+
+	return imsu.delete(ctx, find)
+}
+
+func (imsu *shortURIUserInMemRepo) DeleteByUnique(ctx context.Context, userID string, ID string) error {
+	if userID == "" || ID == "" {
+		return nil
+	}
+
+	find, err := imsu.GetByUnique(ctx, userID, ID)
+	if err != nil {
+		return err
+	}
+	if find == nil {
+		return nil
+	}
+
+	return imsu.delete(ctx, find)
+}
+
+func (imsu *shortURIUserInMemRepo) DeleteAllByUnique(ctx context.Context, userID string, shortURIIds []string) error {
+	// ToDo: implement goroutine
+	// ..
+
+	if userID == "" || len(shortURIIds) == 0 {
+		return nil
+	}
+
+	for _, shortURIID := range shortURIIds {
+		err := imsu.DeleteByUnique(ctx, userID, shortURIID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (imsu *shortURIUserInMemRepo) DeleteAllByUser(ctx context.Context, userID string) error {
+	if userID == "" {
+		return nil
+	}
+
+	toDelete, err := imsu.ListAllByUser(ctx, userID)
+	if err != nil {
+		return err
+	}
+	for _, entity := range toDelete {
+		err := imsu.delete(ctx, entity)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (imsu *shortURIUserInMemRepo) DeleteAllByShortURI(ctx context.Context, shortURIID string) error {
+	if shortURIID == "" {
+		return nil
+	}
+
+	toDelete, err := imsu.ListAllByShortURI(ctx, shortURIID)
+	if err != nil {
+		return err
+	}
+
+	for _, entity := range toDelete {
+		err := imsu.Delete(ctx, entity.ID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (imsu *shortURIUserInMemRepo) Remove(ctx context.Context, ID string) error {
+	if ID == "" {
+		return nil
+	}
+
+	imsu.anchor.Lock()
+	defer imsu.anchor.Unlock()
+	delete(imsu.Cache.GetShortURIUserCache(), ID)
+
+	return nil
+}
+
+func (imsu *shortURIUserInMemRepo) RemoveByUnique(ctx context.Context, userID string, shortURIID string) error {
+	if userID == "" || shortURIID == "" {
+		return nil
+	}
+
+	find, err := imsu.GetByUnique(ctx, userID, shortURIID)
+	if err != nil {
+		return err
+	}
+	if find == nil {
+		return nil
+	}
+
+	return imsu.Remove(ctx, find.ID)
+}
+
+func (imsu *shortURIUserInMemRepo) RemoveAllByUser(ctx context.Context, userID string) error {
+	if userID == "" {
+		return nil
+	}
+
+	toRemove, err := imsu.ListAllByUser(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	for _, entity := range toRemove {
+		err := imsu.Remove(ctx, entity.ID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (imsu *shortURIUserInMemRepo) RemoveAllByShortURI(ctx context.Context, shortURIID string) error {
+	if shortURIID == "" {
+		return nil
+	}
+
+	toRemove, err := imsu.ListAllByShortURI(ctx, shortURIID)
+	if err != nil {
+		return err
+	}
+
+	for _, entity := range toRemove {
+		err := imsu.Remove(ctx, entity.ID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (imsu *shortURIUserInMemRepo) CreateStmt(ctx context.Context, stmt *sql.Stmt, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
+	return imsu.Create(ctx, entity)
+}
+
+func (imsu *shortURIUserInMemRepo) ChangeStmt(ctx context.Context, stmt *sql.Stmt, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
+	return imsu.Change(ctx, entity)
+}
+
+func (imsu *shortURIUserInMemRepo) DeleteStmt(ctx context.Context, stmt *sql.Stmt, ID string) error {
+	return imsu.Delete(ctx, ID)
+}
+
+func (imsu *shortURIUserInMemRepo) DeleteByUniqueStmt(ctx context.Context, stmt *sql.Stmt, userID string, shortURIID string) error {
+	return imsu.DeleteByUnique(ctx, userID, shortURIID)
+}
+
+func (imsu *shortURIUserInMemRepo) DeleteAllByUniqueStmt(ctx context.Context, stmt *sql.Stmt, userID string, shortURIIds []string) error {
+	return imsu.DeleteAllByUnique(ctx, userID, shortURIIds)
+}
+
+func (imsu *shortURIUserInMemRepo) DeleteAllByUserStmt(ctx context.Context, stmt *sql.Stmt, userID string) error {
+	return imsu.DeleteAllByUser(ctx, userID)
+}
+
+func (imsu *shortURIUserInMemRepo) DeleteAllByShortURIStmt(ctx context.Context, stmt *sql.Stmt, shortURIID string) error {
+	return imsu.DeleteAllByShortURI(ctx, shortURIID)
+}
+
+func (imsu *shortURIUserInMemRepo) RemoveStmt(ctx context.Context, stmt *sql.Stmt, ID string) error {
+	return imsu.Remove(ctx, ID)
+}
+
+func (imsu *shortURIUserInMemRepo) RemoveByUniqueStmt(ctx context.Context, stmt *sql.Stmt, userID string, shortURIID string) error {
+	return imsu.RemoveByUnique(ctx, userID, shortURIID)
+}
+
+func (imsu *shortURIUserInMemRepo) RemoveAllByUserStmt(ctx context.Context, stmt *sql.Stmt, userID string) error {
+	return imsu.RemoveAllByUser(ctx, userID)
+}
+
+func (imsu *shortURIUserInMemRepo) RemoveAllByShortURIStmt(ctx context.Context, stmt *sql.Stmt, shortURIID string) error {
+	return imsu.RemoveAllByShortURI(ctx, shortURIID)
+}
+
+func (imsu *shortURIUserInMemRepo) delete(ctx context.Context, entity *_model.ShortURIUser) error {
+	if entity == nil {
+		return nil
+	}
+
+	entity.Deleted = true
+
+	_, err := imsu.Change(ctx, entity)
+
+	return err
 }

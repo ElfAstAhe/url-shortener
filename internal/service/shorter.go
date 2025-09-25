@@ -14,11 +14,6 @@ type Shorter struct {
 	Repository _repo.ShortURIRepository
 }
 
-func (s *Shorter) BatchDelete(ctx context.Context, data UserBatchDeletes) error {
-	//TODO implement me
-	panic("implement me")
-}
-
 func NewShorterService(repo _repo.ShortURIRepository) (*Shorter, error) {
 	return &Shorter{
 		Repository: repo,
@@ -44,13 +39,18 @@ func (s *Shorter) GetURL(ctx context.Context, key string) (string, error) {
 }
 
 func (s *Shorter) Store(ctx context.Context, url string) (string, error) {
+	userInfo, err := _auth.UserInfoFromContext(ctx)
+	if err != nil {
+		return "", err
+	}
+
 	key := _utl.EncodeURIStr(url)
 	model, err := _model.NewShortURI(url, key)
 	if err != nil {
 		return "", err
 	}
 
-	model, err = s.Repository.Create(ctx, model)
+	model, err = s.Repository.Create(ctx, userInfo.UserID, model)
 	if err != nil && model == nil {
 		return "", err
 	} else if err != nil {
@@ -65,12 +65,17 @@ func (s *Shorter) BatchStore(ctx context.Context, source CorrelationUrls) (Corre
 		return CorrelationShorts{}, nil
 	}
 
+	userInfo, err := _auth.UserInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	repoBatch, err := s.toBatchSource(source)
 	if err != nil {
 		return nil, err
 	}
 
-	batchRes, err := s.Repository.BatchCreate(ctx, repoBatch)
+	batchRes, err := s.Repository.BatchCreate(ctx, userInfo.UserID, repoBatch)
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +100,11 @@ func (s *Shorter) GetAllUserShorts(ctx context.Context, userID string) (UserShor
 	}
 
 	return models, nil
+}
+
+func (s *Shorter) BatchDelete(ctx context.Context, data UserBatchDeletes) error {
+	//TODO implement me
+	panic("implement me")
 }
 
 // ================
