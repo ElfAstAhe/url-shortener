@@ -28,6 +28,7 @@ from
         on
             su.user_id = $1
         and su.short_uri_id = s.id`
+	listShortURIIdsByKeysSQL string = `select su.id from short_uris su where su.id in ($1)`
 )
 
 type shortURIPgRepo struct {
@@ -161,17 +162,23 @@ func (pgs *shortURIPgRepo) Create(ctx context.Context, userID string, entity *_m
 		tx.Commit()
 	}()
 
-	preparedSQL, err := tx.Prepare(createShortURISQL)
+	stmt, err := tx.PrepareContext(ctx, createShortURISQL)
 	if err != nil {
 		return nil, err
 	}
-	defer _utl.CloseOnly(preparedSQL)
+	defer _utl.CloseOnly(stmt)
+	stmtSU, err := tx.PrepareContext(ctx, createShortURIUserSQL)
+	if err != nil {
+		return nil, err
+	}
+	defer _utl.CloseOnly(stmtSU)
+
 	// id, original_url, key
-	res, err := pgs.internalCreate(ctx, preparedSQL, entity)
+	res, err := pgs.internalCreate(ctx, stmt, entity)
 	if err != nil {
 		return nil, err
 	}
-	if err := pgs.addUser(ctx, tx, res.ID, userID); err != nil {
+	if err := pgs.addUser(ctx, stmtSU, res.ID, userID); err != nil {
 		return nil, err
 	}
 
@@ -212,6 +219,11 @@ func (pgs *shortURIPgRepo) BatchCreate(ctx context.Context, userID string, batch
 		return nil, err
 	}
 	defer _utl.CloseOnly(stmt)
+	stmtSU, err := tx.PrepareContext(ctx, createShortURIUserSQL)
+	if err != nil {
+		return nil, err
+	}
+	defer _utl.CloseOnly(stmtSU)
 
 	res := make(map[string]*_model.ShortURI)
 	for correlation, entity := range batch {
@@ -220,7 +232,7 @@ func (pgs *shortURIPgRepo) BatchCreate(ctx context.Context, userID string, batch
 			return nil, err
 		}
 		if find != nil {
-			if err := pgs.addUser(ctx, tx, find.ID, userID); err != nil {
+			if err := pgs.addUser(ctx, stmtSU, find.ID, userID); err != nil {
 				return nil, err
 			}
 			res[correlation] = find
@@ -232,7 +244,7 @@ func (pgs *shortURIPgRepo) BatchCreate(ctx context.Context, userID string, batch
 		if err != nil {
 			return nil, err
 		}
-		if err := pgs.addUser(ctx, tx, saved.ID, userID); err != nil {
+		if err := pgs.addUser(ctx, stmtSU, saved.ID, userID); err != nil {
 			return nil, err
 		}
 
@@ -278,8 +290,7 @@ func (pgs *shortURIPgRepo) Delete(ctx context.Context, ID string, userID string)
 }
 
 func (pgs *shortURIPgRepo) BatchDeleteByKeys(ctx context.Context, userID string, keys []string) error {
-	//TODO implement me
-	panic("implement me")
+
 }
 
 func (pgs *shortURIPgRepo) internalCreate(ctx context.Context, preparedSQL *sql.Stmt, entity *_model.ShortURI) (*_model.ShortURI, error) {

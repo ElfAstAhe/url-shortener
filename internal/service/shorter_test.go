@@ -24,11 +24,6 @@ var testAdminRoles auth.Roles = auth.Roles{
 type repoMock struct {
 }
 
-func (rm *repoMock) BatchDelete(ctx context.context.Context, userID string, ids []string) error {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (rm *repoMock) GetByKeyUser(ctx context.Context, userID string, key string) (*model.ShortURI, error) {
 	if key == "" {
 		return nil, nil
@@ -48,7 +43,7 @@ func (rm *repoMock) ListAllByUser(ctx context.Context, userID string) ([]*model.
 	panic("implement me")
 }
 
-func (rm *repoMock) BatchCreate(ctx context.Context, batch map[string]*model.ShortURI) (map[string]*model.ShortURI, error) {
+func (rm *repoMock) BatchCreate(ctx context.Context, userID string, batch map[string]*model.ShortURI) (map[string]*model.ShortURI, error) {
 	return map[string]*model.ShortURI{}, nil
 }
 
@@ -69,7 +64,7 @@ func (rm *repoMock) GetByKey(ctx context.Context, key string) (*model.ShortURI, 
 	return nil, nil
 }
 
-func (rm *repoMock) Create(ctx context.Context, shortURI *model.ShortURI) (*model.ShortURI, error) {
+func (rm *repoMock) Create(ctx context.Context, userID string, shortURI *model.ShortURI) (*model.ShortURI, error) {
 	if shortURI == nil {
 		return nil, nil
 	}
@@ -81,6 +76,18 @@ func (rm *repoMock) buildModel() *model.ShortURI {
 	data, _ := model.NewShortURIFull(ExpectedID, ExpectedOriginalURL, ExpectedKey)
 
 	return data
+}
+
+func (rm *repoMock) Delete(ctx context.Context, ID string, userID string) error {
+	panic("implement me")
+}
+
+func (rm *repoMock) BatchDeleteByKeys(ctx context.Context, userID string, keys []string) error {
+	panic("implement me")
+}
+
+func (rm *repoMock) ListAllByKeys(ctx context.Context, keys []string) ([]*model.ShortURI, error) {
+	panic("implement me")
 }
 
 func TestShorterService_store_shouldReturnKey(t *testing.T) {
