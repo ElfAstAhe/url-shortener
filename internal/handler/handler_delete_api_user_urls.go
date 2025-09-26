@@ -25,7 +25,7 @@ func (cr *chiRouter) userUrlsDeleteHandler(rw http.ResponseWriter, r *http.Reque
 	var dto = make(_dto.ShortenBatchDeleteRequest, 0)
 	dec := json.NewDecoder(r.Body)
 	if err := dec.Decode(&dto); err != nil {
-		message := fmt.Sprintf("User info from JSON is invalid: [%v]", err)
+		message := fmt.Sprintf("error deserialize JSON data: [%v]", err)
 		cr.log.Error(message)
 		http.Error(rw, message, http.StatusInternalServerError)
 
