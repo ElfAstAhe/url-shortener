@@ -28,7 +28,7 @@ from
         on
             su.user_id = $1
         and su.short_uri_id = s.id`
-	listShortURIIdsByKeysSQL string = `select su.id from short_uris su where su.id in ($1)`
+	listShortURIIdsByKeysSQL string = `select su.id from short_uris su where su.key in ($1)`
 )
 
 type shortURIPgRepo struct {
@@ -290,7 +290,16 @@ func (pgs *shortURIPgRepo) Delete(ctx context.Context, ID string, userID string)
 }
 
 func (pgs *shortURIPgRepo) BatchDeleteByKeys(ctx context.Context, userID string, keys []string) error {
+	if userID == "" || len(keys) == 0 {
+		return nil
+	}
 
+	ids, err := pgs.listIdsByKeys(ctx, keys)
+	if err != nil {
+		return err
+	}
+
+	return pgs.userRepo.DeleteAllByUnique(ctx, userID, ids)
 }
 
 func (pgs *shortURIPgRepo) internalCreate(ctx context.Context, preparedSQL *sql.Stmt, entity *_model.ShortURI) (*_model.ShortURI, error) {
@@ -319,4 +328,34 @@ func (pgs *shortURIPgRepo) addUser(ctx context.Context, stmt *sql.Stmt, id strin
 	}
 
 	return nil
+}
+
+func (pgs *shortURIPgRepo) listIdsByKeys(ctx context.Context, keys []string) ([]string, error) {
+	res := make([]string, 0)
+	if len(keys) == 0 {
+		return res, nil
+	}
+
+	rows, err := pgs.db.GetDB().QueryContext(ctx, listShortURIIdsByKeysSQL, keys)
+	if err != nil {
+		return nil, err
+	}
+	defer _utl.CloseOnly(rows)
+
+	for rows.Next() {
+		var id string
+		err := rows.Scan(&id)
+		if err != nil && errors.Is(err, sql.ErrNoRows) {
+			return res, nil
+		} else if err != nil {
+			return nil, err
+		}
+
+		res = append(res, id)
+	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return res, nil
 }
