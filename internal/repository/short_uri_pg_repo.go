@@ -36,11 +36,6 @@ type shortURIPgRepo struct {
 	userRepo ShortURIUserRepository
 }
 
-func (pgs *shortURIPgRepo) ListAllByKeys(ctx context.Context, keys []string) ([]*_model.ShortURI, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func newShortURIPgRepo(db _db.DB) (*shortURIPgRepo, error) {
 	if db == nil {
 		return nil, errors.New("db is nil")
@@ -56,6 +51,14 @@ func newShortURIPgRepo(db _db.DB) (*shortURIPgRepo, error) {
 		userRepo: userRepo,
 	}, nil
 }
+
+// Closer
+
+func (pgs *shortURIPgRepo) Close() error {
+	return _db.CloseDB(pgs.db)
+}
+
+// ShortURIRepository
 
 func (pgs *shortURIPgRepo) Get(ctx context.Context, id string) (*_model.ShortURI, error) {
 	row := pgs.db.GetDB().QueryRowContext(ctx, getShortURISQL, id)
@@ -255,6 +258,11 @@ func (pgs *shortURIPgRepo) BatchCreate(ctx context.Context, userID string, batch
 	}
 
 	return res, nil
+}
+
+func (pgs *shortURIPgRepo) ListAllByKeys(ctx context.Context, keys []string) ([]*_model.ShortURI, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (pgs *shortURIPgRepo) ListAllByUser(ctx context.Context, userID string) ([]*_model.ShortURI, error) {

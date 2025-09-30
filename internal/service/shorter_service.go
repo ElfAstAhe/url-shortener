@@ -13,6 +13,8 @@ type UserBatchDeletes []string
 
 // ShorterService app service
 type ShorterService interface {
+	Close() error
+
 	// GetURL return full URL
 	GetURL(ctx context.Context, key string) (string, error)
 

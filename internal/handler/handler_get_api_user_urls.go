@@ -9,6 +9,7 @@ import (
 
 	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
 	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
+	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
 	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
 )
 
@@ -47,6 +48,7 @@ func (cr *chiRouter) userUrlsGetHandler(rw http.ResponseWriter, r *http.Request)
 
 		return
 	}
+	defer _utl.CloseOnly(service)
 
 	ctx := context.WithValue(r.Context(), _auth.ContextUserInfo, userInfo)
 

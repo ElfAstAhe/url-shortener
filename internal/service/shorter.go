@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"io"
 
 	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
@@ -20,6 +21,16 @@ func NewShorterService(repo _repo.ShortURIRepository) (*Shorter, error) {
 	return &Shorter{
 		Repository: repo,
 	}, nil
+}
+
+// Closer
+
+func (s *Shorter) Close() error {
+	if closer, ok := s.Repository.(io.Closer); ok {
+		return closer.Close()
+	}
+
+	return nil
 }
 
 // ShorterService

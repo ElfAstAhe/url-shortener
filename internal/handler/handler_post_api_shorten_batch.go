@@ -9,6 +9,7 @@ import (
 	_dto "github.com/ElfAstAhe/url-shortener/internal/handler/dto"
 	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
 	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
+	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
 )
 
 func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Request) {
@@ -54,6 +55,7 @@ func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Req
 
 		return
 	}
+	defer _utl.CloseOnly(service)
 
 	ctx := context.WithValue(r.Context(), _auth.ContextUserInfo, userInfo)
 	serviceBatchResult, err := service.BatchStore(ctx, serviceBatch)

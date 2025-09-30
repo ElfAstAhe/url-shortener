@@ -9,6 +9,7 @@ import (
 	_dto "github.com/ElfAstAhe/url-shortener/internal/handler/dto"
 	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
 	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
+	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
 )
 
 func (cr *chiRouter) userUrlsDeleteHandler(rw http.ResponseWriter, r *http.Request) {
@@ -49,6 +50,7 @@ func (cr *chiRouter) batchDeleteAsync(ctx context.Context, request _dto.ShortenB
 
 		return
 	}
+	defer _utl.CloseOnly(service)
 
 	// map into service format
 	source, err := _mapper.UserBatchDeletesFromDto(request)

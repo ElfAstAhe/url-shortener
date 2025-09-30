@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
+	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
 	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
 	"github.com/go-chi/chi/v5"
 )
@@ -31,6 +32,7 @@ func (cr *chiRouter) rootGETHandler(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+	defer _utl.CloseOnly(service)
 
 	ctx := context.WithValue(r.Context(), _auth.ContextUserInfo, userInfo)
 	fullURL, err := service.GetURL(ctx, key)

@@ -9,6 +9,7 @@ import (
 	_dto "github.com/ElfAstAhe/url-shortener/internal/handler/dto"
 	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
 	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
+	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
 )
 
 func (cr *chiRouter) shortenPostHandler(rw http.ResponseWriter, r *http.Request) {
@@ -49,6 +50,7 @@ func (cr *chiRouter) shortenPostHandler(rw http.ResponseWriter, r *http.Request)
 
 		return
 	}
+	defer _utl.CloseOnly(service)
 
 	ctx := context.WithValue(r.Context(), _auth.ContextUserInfo, userInfo)
 	key, conflictErr := service.Store(ctx, request.URL)
