@@ -3,6 +3,8 @@ package handler
 import (
 	"io"
 	"net/http"
+
+	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
 )
 
 func (cr *chiRouter) pingGetHandler(w http.ResponseWriter, r *http.Request) {
@@ -14,7 +16,7 @@ func (cr *chiRouter) pingGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer func() {
 		if closer, ok := service.(io.Closer); ok {
-			closer.Close()
+			_utl.CloseOnly(closer)
 		}
 	}()
 

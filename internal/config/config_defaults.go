@@ -13,3 +13,4 @@ const DefaultDBKind = DBKindPostgres
 const DefaultDBDsn = ""
 
 const DefaultStoragePath = "./shortener.txt"
+const DefaultStorageUserPath = "./shortener_user.txt"

@@ -103,6 +103,12 @@ func (app *App) initCacheData() error {
 			app.log.Errorf("Error loading data: [%v]", err)
 			app.log.Warn("Using empty data storage")
 		}
+
+		app.log.Info("Load data from storage user...")
+		if err := app.loadShortURIUserData(_cfg.AppConfig.StorageUserPath, cache); err != nil {
+			app.log.Errorf("Error loading data: [%v]", err)
+			app.log.Warn("Using empty data storage")
+		}
 	}
 
 	return nil
@@ -147,6 +153,9 @@ func (app *App) gracefulShutdown() {
 		if err := app.saveShortURIData(_cfg.AppConfig.StoragePath, cache); err != nil {
 			app.log.Errorf("Error save shortURI data: [%v]", err)
 		}
+		if err := app.saveShortURIUserData(_cfg.AppConfig.StorageUserPath, cache); err != nil {
+			app.log.Errorf("Error save shortURI user data: [%v]", err)
+		}
 	}
 
 	if err := _db.CloseDB(app.DB); err != nil {
@@ -168,6 +177,16 @@ func (app *App) loadShortURIData(storagePath string, cache _db.InMemoryCache) er
 	return storageReader.LoadData(cache.GetShortURICache())
 }
 
+func (app *App) loadShortURIUserData(storagePath string, cache _db.InMemoryCache) error {
+	storageReader, err := _storage.NewShortURIUserStorageReader(storagePath)
+	if err != nil {
+		return err
+	}
+	defer _utl.CloseOnly(storageReader)
+
+	return storageReader.LoadData(cache.GetShortURIUserCache())
+}
+
 func (app *App) saveShortURIData(storagePath string, cache _db.InMemoryCache) error {
 	storageWriter, err := _storage.NewShortURLStorageWriter(storagePath)
 	if err != nil {
@@ -176,4 +195,14 @@ func (app *App) saveShortURIData(storagePath string, cache _db.InMemoryCache) er
 	defer _utl.CloseOnly(storageWriter)
 
 	return storageWriter.SaveData(cache.GetShortURICache())
+}
+
+func (app *App) saveShortURIUserData(storagePath string, cache _db.InMemoryCache) error {
+	storageWriter, err := _storage.NewShortURIUserStorageWriter(storagePath)
+	if err != nil {
+		return err
+	}
+	defer _utl.CloseOnly(storageWriter)
+
+	return storageWriter.SaveData(cache.GetShortURIUserCache())
 }

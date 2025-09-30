@@ -10,58 +10,62 @@ import (
 	"go.uber.org/zap"
 )
 
-type ShortURLStorageReader struct {
+type ShortURIUserStorageReader struct {
 	File   *os.File
 	Reader *bufio.Scanner
 	log    *zap.SugaredLogger
 }
 
-func NewShortURLStorageReader(storagePath string) (*ShortURLStorageReader, error) {
+func NewShortURIUserStorageReader(storagePath string) (*ShortURIUserStorageReader, error) {
 	storage, err := os.OpenFile(storagePath, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ShortURLStorageReader{
+	return &ShortURIUserStorageReader{
 		File:   storage,
 		Reader: bufio.NewScanner(storage),
 		log:    _log.Log.Sugar(),
 	}, nil
 }
 
-type ShortURLStorageWriter struct {
+func (r *ShortURIUserStorageReader) Close() error {
+	return r.File.Close()
+}
+
+type ShortURIUserStorageWriter struct {
 	File   *os.File
 	Writer *bufio.Writer
 	log    *zap.SugaredLogger
 }
 
-func NewShortURLStorageWriter(storagePath string) (*ShortURLStorageWriter, error) {
+func NewShortURIUserStorageWriter(storagePath string) (*ShortURIUserStorageWriter, error) {
 	storage, err := os.OpenFile(storagePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ShortURLStorageWriter{
+	return &ShortURIUserStorageWriter{
 		File:   storage,
 		Writer: bufio.NewWriter(storage),
 		log:    _log.Log.Sugar(),
 	}, nil
 }
 
-func (r *ShortURLStorageReader) Close() error {
-	return r.File.Close()
+func (w *ShortURIUserStorageWriter) Close() error {
+	return w.File.Close()
 }
 
-func (r *ShortURLStorageReader) LoadData(cache map[string]*_model.ShortURI) error {
+func (r *ShortURIUserStorageReader) LoadData(cache map[string]*_model.ShortURIUser) error {
 	clear(cache)
 	for r.Reader.Scan() {
 		data := r.Reader.Bytes()
-		var shortURL _model.ShortURI
-		if err := json.Unmarshal(data, &shortURL); err != nil {
-			r.log.Warn("Failed to unmarshal short URI")
+		var entity _model.ShortURIUser
+		if err := json.Unmarshal(data, &entity); err != nil {
+			r.log.Warn("Failed to unmarshal short URI User", zap.Error(err))
 		}
-		r.log.Infof("Add short URI: %s", shortURL.ID)
-		cache[shortURL.ID] = &shortURL
+		r.log.Infof("Add short URI suer: %s", entity.ID)
+		cache[entity.ID] = &entity
 	}
 	if err := r.Reader.Err(); err != nil {
 		return err
@@ -70,19 +74,15 @@ func (r *ShortURLStorageReader) LoadData(cache map[string]*_model.ShortURI) erro
 	return nil
 }
 
-func (w *ShortURLStorageWriter) Close() error {
-	return w.File.Close()
-}
-
-func (w *ShortURLStorageWriter) SaveData(cache map[string]*_model.ShortURI) error {
-	for id, shortURL := range cache {
+func (w *ShortURIUserStorageWriter) SaveData(cache map[string]*_model.ShortURIUser) error {
+	for id, entity := range cache {
 		w.log.Infof("Saving short URI %s to %s", id, w.File.Name())
-		data, err := json.Marshal(shortURL)
+		data, err := json.Marshal(entity)
 		if err != nil {
 			w.log.Warnf("Failed to marshal short URI id [%s]", id)
 			return err
 		}
-		if err := w.writeLine(data, shortURL.ID); err != nil {
+		if err := w.writeLine(data, entity.ID); err != nil {
 			w.log.Warnf("Failed to write short URI id [%s]", id)
 		}
 	}
@@ -90,20 +90,20 @@ func (w *ShortURLStorageWriter) SaveData(cache map[string]*_model.ShortURI) erro
 	return nil
 }
 
-func (w *ShortURLStorageWriter) writeLine(data []byte, id string) error {
+func (w *ShortURIUserStorageWriter) writeLine(data []byte, id string) error {
 	if _, err := w.Writer.Write(data); err != nil {
-		w.log.Warnf("Failed to write short URI id [%s]", id)
+		w.log.Warnf("Failed to write short URI user with id [%s]", id)
 
 		return err
 	}
 	if err := w.Writer.WriteByte('\n'); err != nil {
-		w.log.Warnf("Failed to write term symbol short URI id [%s]", id)
+		w.log.Warnf("Failed to write term symbol short URI user with id [%s]", id)
 
 		return err
 	}
 
 	if err := w.Writer.Flush(); err != nil {
-		w.log.Warnf("Failed to flush short URI id [%s]", id)
+		w.log.Warnf("Failed to flush short URI user with id [%s]", id)
 
 		return err
 	}

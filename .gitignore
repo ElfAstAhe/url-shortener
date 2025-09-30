@@ -25,3 +25,4 @@ vendor/
 /shortener
 /shortener.txt
 /cmd/shortener/shortener.txt
+/cmd/shortener/shortener_user.txt

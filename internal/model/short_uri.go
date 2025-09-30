@@ -1,8 +1,8 @@
 package model
 
 import (
+	"errors"
 	"net/url"
-	"time"
 
 	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
 	"github.com/google/uuid"
@@ -12,35 +12,35 @@ type ShortURI struct {
 	ID          string     `db:"id" json:"id"`
 	OriginalURL *CustomURL `db:"original_url" json:"original_url"`
 	Key         string     `db:"key" json:"key"`
-	TechData    `json:"tech_data,omitempty"`
 }
 
 func NewShortURI(originalURL string, key string) (*ShortURI, error) {
-	return NewShortURIFull(uuid.New().String(), originalURL, key, &TechData{
-		CreateUser: "unknown",
-		Created:    time.Now(),
-		UpdateUser: "unknown",
-		Updated:    time.Now(),
-	})
+	return NewShortURIFull(uuid.New().String(), originalURL, key)
 }
 
-func NewShortURIFull(ID string, originalURL string, key string, techData *TechData) (*ShortURI, error) {
+func NewShortURIFull(ID string, originalURL string, key string) (*ShortURI, error) {
 	origURL, err := url.Parse(originalURL)
 	if err != nil {
 		return nil, _err.NewInvalidOriginalURLError(originalURL)
 	}
 
-	return NewShortURIComplete(ID, origURL, key, techData), nil
-}
-
-func NewShortURIComplete(ID string,
-	origURL *url.URL,
-	key string,
-	techData *TechData) *ShortURI {
 	return &ShortURI{
 		ID:          ID,
 		OriginalURL: &CustomURL{origURL},
 		Key:         key,
-		TechData:    *techData,
+	}, nil
+}
+
+func ValidateShortURI(entity *ShortURI) error {
+	if entity == nil {
+		return errors.New("entity is nil")
 	}
+	if entity.Key == "" {
+		return errors.New("key is required")
+	}
+	if entity.OriginalURL == nil || entity.OriginalURL.URL == nil || entity.OriginalURL.URL.String() == "" {
+		return errors.New("original_url is required")
+	}
+
+	return nil
 }
