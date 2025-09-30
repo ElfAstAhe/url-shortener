@@ -53,6 +53,8 @@ func TestRootHandler_getMethod_success(t *testing.T) {
 	ctx := context.WithValue(context.Background(), auth.ContextUserInfo, userInfo)
 	_, err := service.Store(ctx, expectedURL)
 	require.NoError(t, err)
+	jwtString, err := auth.NewJWTStringFromUserInfo(userInfo)
+	require.NoError(t, err)
 	// test cases
 	testCases := []test.HTTPTestCase{
 		{Name: "method GET -> not found", Method: http.MethodGet, Path: "http://localhost:8080/123", ExpectedStatusCode: http.StatusNotFound, ExpectedStrValue: ""},
@@ -62,6 +64,11 @@ func TestRootHandler_getMethod_success(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.Name, func(t *testing.T) {
 			req := httptest.NewRequest(testCase.Method, testCase.Path, nil)
+			req.AddCookie(&http.Cookie{
+				Name:     auth.CookieName,
+				Value:    jwtString,
+				SameSite: http.SameSiteStrictMode,
+			})
 			recorder := httptest.NewRecorder()
 			router.GetRouter().ServeHTTP(recorder, req)
 
