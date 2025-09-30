@@ -16,10 +16,14 @@ func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Req
 	if err != nil {
 		// Attention!!! For iteration 14 ONLY, remove in future!
 		message := fmt.Sprintf("userInfoFromRequestJWT error: [%v]", err)
-		cr.log.Error(message)
+		cr.log.Warn(message)
 		if userInfo, err = cr.iter14SetAuthCookie(rw); err != nil {
 			message := fmt.Sprintf("process unauthorized error: [%v]", err)
 			cr.log.Error(message)
+
+			http.Error(rw, message, http.StatusInternalServerError)
+
+			return
 		}
 	}
 

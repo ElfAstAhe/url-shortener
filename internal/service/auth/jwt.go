@@ -19,7 +19,7 @@ type AppClaims struct {
 }
 
 const secretKey = "secret-key"
-const timeExpirationDuration = time.Minute * 30
+const timeExpirationDuration = time.Minute * 120
 
 var TestRoles Roles = []string{
 	"test_role1",
