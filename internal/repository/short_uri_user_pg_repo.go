@@ -167,7 +167,7 @@ func (pgsu *shortURIUserPgRepo) CreateStmt(ctx context.Context, stmt *sql.Stmt, 
 	}
 	entity.ID = newID.String()
 
-	_, err = stmt.ExecContext(ctx, entity.ID, entity.ShortURIID, entity.UserID)
+	_, err = stmt.ExecContext(ctx, entity.ID, entity.ShortURIID, entity.UserID, entity.Deleted)
 	if err != nil {
 		return nil, err
 	}
