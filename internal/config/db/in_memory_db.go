@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"sync"
 
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
 )
@@ -17,6 +18,8 @@ type inMemoryDB struct {
 
 	// ShortURIUser map key is short uri user entity id attribute
 	ShortURIUser map[string]*_model.ShortURIUser
+
+	anchor sync.RWMutex
 }
 
 var inMemDB *inMemoryDB
@@ -63,6 +66,10 @@ func (db *inMemoryDB) GetDsn() string {
 // ========
 
 // InMemoryCache
+
+func (db *inMemoryDB) GetRWMutex() *sync.RWMutex {
+	return &db.anchor
+}
 
 func (db *inMemoryDB) GetShortURICache() map[string]*_model.ShortURI {
 	return db.ShortURI

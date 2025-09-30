@@ -17,7 +17,6 @@ import (
 type shortURIInMemRepo struct {
 	Cache    _db.InMemoryCache
 	userRepo ShortURIUserRepository
-	anchor   sync.RWMutex
 	log      *zap.SugaredLogger
 }
 
@@ -39,8 +38,8 @@ func newShortURIInMemRepo(db _db.DB) (*shortURIInMemRepo, error) {
 }
 
 func (ims *shortURIInMemRepo) Get(ctx context.Context, id string) (*_model.ShortURI, error) {
-	ims.anchor.RLock()
-	defer ims.anchor.RUnlock()
+	ims.Cache.GetRWMutex().RLock()
+	defer ims.Cache.GetRWMutex().RUnlock()
 	res := ims.Cache.GetShortURICache()[id]
 
 	return res, nil
@@ -51,8 +50,8 @@ func (ims *shortURIInMemRepo) GetByKey(ctx context.Context, key string) (*_model
 		return nil, nil
 	}
 
-	ims.anchor.RLock()
-	defer ims.anchor.RUnlock()
+	ims.Cache.GetRWMutex().RLock()
+	defer ims.Cache.GetRWMutex().RUnlock()
 	for _, value := range ims.Cache.GetShortURICache() {
 		if value.Key == key {
 			return value, nil
@@ -115,8 +114,8 @@ func (ims *shortURIInMemRepo) Create(ctx context.Context, userID string, entity 
 	}
 	entity.ID = newID.String()
 
-	ims.anchor.Lock()
-	defer ims.anchor.Unlock()
+	ims.Cache.GetRWMutex().Lock()
+	defer ims.Cache.GetRWMutex().Unlock()
 	ims.Cache.GetShortURICache()[entity.ID] = entity
 
 	if err := ims.addUser(ctx, entity.ID, userID); err != nil {
@@ -162,8 +161,8 @@ func (ims *shortURIInMemRepo) ListAllByKeys(ctx context.Context, keys []string) 
 		return res, nil
 	}
 
-	ims.anchor.RLock()
-	defer ims.anchor.RUnlock()
+	ims.Cache.GetRWMutex().RLock()
+	defer ims.Cache.GetRWMutex().RUnlock()
 	for key, value := range ims.Cache.GetShortURICache() {
 		if value.Key == key {
 			res = append(res, value)
