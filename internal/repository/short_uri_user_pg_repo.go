@@ -25,12 +25,12 @@ const (
 	changeShortURIUserSQL              string = `update short_uri_users set short_uri_id=$2, user_id=$3, deleted = $4 where id = $1`
 	deleteShortURIUserSQL              string = `update short_uri_users set deleted = true where id = $1`
 	deleteShortURIUserByUniqueSQL      string = `update short_uri_users set deleted = true where user_id = $1 and short_uri_id = $2`
-	deleteAllShortURIUserByUniqueSQL   string = `update short_uri_users set deleted = true where user_id = $1 and short_uri_id in ($2)`
+	deleteAllShortURIUserByUniqueSQL   string = `update short_uri_users set deleted = true where user_id = $1 and short_uri_id = any($2)`
 	deleteAllShortURIUserByUserSQL     string = `update short_uri_users set deleted = true where user_id = $1`
 	deleteAllShortURIUserByShortURISQL string = `update short_uri_users set deleted = true where short_uri_id = $1`
 	removeShortURIUserSQL              string = `delete from short_uri_users where id = $1`
 	removeShortURIUserByUniqueSQL      string = `delete from short_uri_users where user_id = $1 and short_uri_id = $2`
-	removeAllShortURIUserByUniqueSQL   string = `delete from short_uri_users where user_id = $1 and short_uri_id in ($2)`
+	removeAllShortURIUserByUniqueSQL   string = `delete from short_uri_users where user_id = $1 and short_uri_id = any($2)`
 	removeAllShortURIUserByUserSQL     string = `delete from short_uri_users where user_id = $1`
 	removeAllShortURIUserByShortURISQL string = `delete from short_uri_users where short_uri_id = $1`
 )

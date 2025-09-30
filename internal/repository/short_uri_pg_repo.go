@@ -28,7 +28,7 @@ from
         on
             su.user_id = $1
         and su.short_uri_id = s.id`
-	listShortURIIdsByKeysSQL string = `select su.id from short_uris su where su.key in ($1)`
+	listShortURIIdsByKeysSQL string = `select su.id from short_uris su where su.key = any($1)`
 )
 
 type shortURIPgRepo struct {
