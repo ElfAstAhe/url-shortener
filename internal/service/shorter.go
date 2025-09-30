@@ -103,8 +103,12 @@ func (s *Shorter) GetAllUserShorts(ctx context.Context, userID string) (UserShor
 }
 
 func (s *Shorter) BatchDelete(ctx context.Context, data UserBatchDeletes) error {
-	//TODO implement me
-	panic("implement me")
+	userInfo, err := _auth.UserInfoFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	return s.Repository.BatchDeleteByKeys(ctx, userInfo.UserID, data)
 }
 
 // ================

@@ -6,20 +6,19 @@ import (
 	"sync"
 
 	_db "github.com/ElfAstAhe/url-shortener/internal/config/db"
+	_log "github.com/ElfAstAhe/url-shortener/internal/logger"
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
 	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
-
-type shortURIBatchItem struct {
-	ShortURI *_model.ShortURI
-	UserID   string
-}
 
 type shortURIInMemRepo struct {
 	Cache    _db.InMemoryCache
 	userRepo ShortURIUserRepository
 	anchor   sync.RWMutex
+	log      *zap.SugaredLogger
 }
 
 func newShortURIInMemRepo(db _db.DB) (*shortURIInMemRepo, error) {
@@ -32,6 +31,7 @@ func newShortURIInMemRepo(db _db.DB) (*shortURIInMemRepo, error) {
 		return &shortURIInMemRepo{
 			Cache:    cache,
 			userRepo: userRepo,
+			log:      _log.Log.Sugar(),
 		}, nil
 	}
 
@@ -193,7 +193,101 @@ func (ims *shortURIInMemRepo) BatchDeleteByKeys(ctx context.Context, userID stri
 		return err
 	}
 
-	return ims.BatchDeleteByKeys(ctx, userID, ids)
+	inCh := ims.iter15Generator(ctx, ids)
+
+	channels := ims.iter15FanOut(ctx, userID, inCh)
+
+	res := ims.iter15FanIn(ctx, channels...)
+
+	var errs errgroup.Group
+	for dml := range res {
+		errs.Go(func() error {
+			ims.log.Infof("BatchDeleteByKeys dml result: [%v]", dml)
+
+			return dml.Err
+		})
+
+	}
+
+	return errs.Wait()
+}
+
+func (ims *shortURIInMemRepo) iter15Generator(ctx context.Context, ids []string) chan string {
+	inCh := make(chan string)
+
+	go func() {
+		defer close(inCh)
+
+		for _, id := range ids {
+			select {
+			case <-ctx.Done():
+				return
+			case inCh <- id:
+			}
+		}
+	}()
+
+	return inCh
+}
+
+func (ims *shortURIInMemRepo) iter15FanOut(ctx context.Context, userID string, inCh chan string) []chan *DMLResult {
+	workersCount := 4
+	res := make([]chan *DMLResult, workersCount)
+
+	for index := 0; index < workersCount; index++ {
+		res[index] = ims.iter15Delete(ctx, userID, inCh)
+	}
+
+	return res
+}
+
+func (ims *shortURIInMemRepo) iter15Delete(ctx context.Context, userID string, inCh chan string) chan *DMLResult {
+	res := make(chan *DMLResult)
+
+	go func() {
+		defer close(res)
+
+		for id := range inCh {
+			select {
+			case <-ctx.Done():
+				return
+			case res <- NewDMLResult(ims.userRepo.DeleteByUnique(ctx, userID, id), "short_uri_users", id):
+			}
+		}
+	}()
+
+	return res
+}
+
+func (ims *shortURIInMemRepo) iter15FanIn(ctx context.Context, resCh ...chan *DMLResult) chan *DMLResult {
+	res := make(chan *DMLResult)
+
+	var wg sync.WaitGroup
+
+	for _, ch := range resCh {
+		chClosure := ch
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			for data := range chClosure {
+				select {
+				case <-ctx.Done():
+					return
+				case res <- data:
+				}
+			}
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+
+		close(res)
+	}()
+
+	return res
 }
 
 func (ims *shortURIInMemRepo) listIdsByKeys(ctx context.Context, keys []string) ([]string, error) {
