@@ -62,7 +62,7 @@ func (imsu *shortURIUserInMemRepo) ListAllByUser(ctx context.Context, userID str
 	imsu.anchor.RLock()
 	defer imsu.anchor.RUnlock()
 	for _, entity := range imsu.Cache.GetShortURIUserCache() {
-		if entity.UserID == userID {
+		if entity.UserID == userID && !entity.Deleted {
 			res = append(res, entity)
 		}
 	}
