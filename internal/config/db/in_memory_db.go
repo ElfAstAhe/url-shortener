@@ -19,7 +19,8 @@ type inMemoryDB struct {
 	// ShortURIUser map key is short uri user entity id attribute
 	ShortURIUser map[string]*_model.ShortURIUser
 
-	anchor sync.RWMutex
+	shortURIAnchor     sync.RWMutex
+	shortURIUserAnchor sync.RWMutex
 }
 
 var inMemDB *inMemoryDB
@@ -67,8 +68,12 @@ func (db *inMemoryDB) GetDsn() string {
 
 // InMemoryCache
 
-func (db *inMemoryDB) GetRWMutex() *sync.RWMutex {
-	return &db.anchor
+func (db *inMemoryDB) GetShortURIRWMutex() *sync.RWMutex {
+	return &db.shortURIAnchor
+}
+
+func (db *inMemoryDB) GetShortURIUserRWMutex() *sync.RWMutex {
+	return &db.shortURIUserAnchor
 }
 
 func (db *inMemoryDB) GetShortURICache() map[string]*_model.ShortURI {

@@ -7,7 +7,8 @@ import (
 )
 
 type InMemoryCache interface {
-	GetRWMutex() *sync.RWMutex
+	GetShortURIRWMutex() *sync.RWMutex
+	GetShortURIUserRWMutex() *sync.RWMutex
 	GetShortURICache() map[string]*_model.ShortURI
 	GetShortURIUserCache() map[string]*_model.ShortURIUser
 	GetShortURIAuditCache() map[string]*_model.ShortURIAudit

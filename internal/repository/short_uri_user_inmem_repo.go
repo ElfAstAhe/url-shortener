@@ -30,8 +30,8 @@ func (imsu *shortURIUserInMemRepo) Get(ctx context.Context, ID string) (*_model.
 		return nil, nil
 	}
 
-	imsu.Cache.GetRWMutex().RLock()
-	defer imsu.Cache.GetRWMutex().RUnlock()
+	imsu.Cache.GetShortURIUserRWMutex().RLock()
+	defer imsu.Cache.GetShortURIUserRWMutex().RUnlock()
 	return imsu.Cache.GetShortURIUserCache()[ID], nil
 }
 
@@ -40,8 +40,8 @@ func (imsu *shortURIUserInMemRepo) GetByUnique(ctx context.Context, userID strin
 		return nil, nil
 	}
 
-	imsu.Cache.GetRWMutex().RLock()
-	defer imsu.Cache.GetRWMutex().RUnlock()
+	imsu.Cache.GetShortURIUserRWMutex().RLock()
+	defer imsu.Cache.GetShortURIUserRWMutex().RUnlock()
 	for _, entity := range imsu.Cache.GetShortURIUserCache() {
 		if entity.UserID == userID && entity.ShortURIID == shortURIID {
 			return entity, nil
@@ -57,8 +57,8 @@ func (imsu *shortURIUserInMemRepo) ListAllByUser(ctx context.Context, userID str
 		return res, nil
 	}
 
-	imsu.Cache.GetRWMutex().RLock()
-	defer imsu.Cache.GetRWMutex().RUnlock()
+	imsu.Cache.GetShortURIUserRWMutex().RLock()
+	defer imsu.Cache.GetShortURIUserRWMutex().RUnlock()
 	for _, entity := range imsu.Cache.GetShortURIUserCache() {
 		if entity.UserID == userID && !entity.Deleted {
 			res = append(res, entity)
@@ -74,8 +74,8 @@ func (imsu *shortURIUserInMemRepo) ListAllByShortURI(ctx context.Context, shortU
 		return res, nil
 	}
 
-	imsu.Cache.GetRWMutex().RLock()
-	defer imsu.Cache.GetRWMutex().RUnlock()
+	imsu.Cache.GetShortURIUserRWMutex().RLock()
+	defer imsu.Cache.GetShortURIUserRWMutex().RUnlock()
 	for _, entity := range imsu.Cache.GetShortURIUserCache() {
 		if entity.ShortURIID == shortURIID {
 			res = append(res, entity)
@@ -96,8 +96,8 @@ func (imsu *shortURIUserInMemRepo) Create(ctx context.Context, entity *_model.Sh
 	}
 
 	entity.ID = newID.String()
-	imsu.Cache.GetRWMutex().Lock()
-	defer imsu.Cache.GetRWMutex().Unlock()
+	imsu.Cache.GetShortURIUserRWMutex().Lock()
+	defer imsu.Cache.GetShortURIUserRWMutex().Unlock()
 	imsu.Cache.GetShortURIUserCache()[entity.ID] = entity
 
 	return entity, nil
@@ -115,8 +115,8 @@ func (imsu *shortURIUserInMemRepo) Change(ctx context.Context, entity *_model.Sh
 		return nil, _err.NewAppModelNotFoundError(entity.ID, "short_uri_user", "")
 	}
 
-	imsu.Cache.GetRWMutex().Lock()
-	defer imsu.Cache.GetRWMutex().Unlock()
+	imsu.Cache.GetShortURIUserRWMutex().Lock()
+	defer imsu.Cache.GetShortURIUserRWMutex().Unlock()
 	imsu.Cache.GetShortURIUserCache()[entity.ID] = entity
 
 	return entity, nil
@@ -216,8 +216,8 @@ func (imsu *shortURIUserInMemRepo) Remove(ctx context.Context, ID string) error 
 		return nil
 	}
 
-	imsu.Cache.GetRWMutex().Lock()
-	defer imsu.Cache.GetRWMutex().Unlock()
+	imsu.Cache.GetShortURIUserRWMutex().Lock()
+	defer imsu.Cache.GetShortURIUserRWMutex().Unlock()
 	delete(imsu.Cache.GetShortURIUserCache(), ID)
 
 	return nil
