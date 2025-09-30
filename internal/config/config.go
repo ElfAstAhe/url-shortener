@@ -14,6 +14,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/caarlos0/env/v6"
@@ -95,7 +96,7 @@ func (c *Config) LoadConfig() error {
 		return err
 	}
 
-	if c.DBDsn == "" {
+	if strings.TrimSpace(c.DBDsn) == "" {
 		c.DBKind = DBKindInMemory
 	}
 
