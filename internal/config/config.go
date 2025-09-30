@@ -15,14 +15,12 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"sync"
 
 	"github.com/caarlos0/env/v6"
 	"go.uber.org/zap"
 )
 
 type Config struct {
-	onceLoad        sync.Once
 	AppName         string      `json:"app_name,omitempty"`
 	ProjectStage    string      `json:"project_stage,omitempty"`
 	LogLevel        string      `json:"log_level,omitempty"`
