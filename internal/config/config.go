@@ -98,6 +98,8 @@ func (c *Config) LoadConfig() error {
 		c.DBKind = DBKindInMemory
 	}
 
+	fmt.Printf("Final config:  [%+v]\n", c)
+
 	return nil
 }
 
