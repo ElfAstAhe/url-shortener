@@ -15,10 +15,7 @@ func (cr *chiRouter) rootGETHandler(w http.ResponseWriter, r *http.Request) {
 	userInfo, err := _auth.UserInfoFromRequestJWT(r)
 	if err != nil {
 		message := fmt.Sprintf("userInfoFromRequestJWT error: [%v]", err)
-		cr.log.Error(message)
-		http.Error(w, message, http.StatusUnauthorized)
-
-		return
+		cr.log.Warn(message)
 	}
 
 	key := chi.URLParam(r, "key")
@@ -27,6 +24,7 @@ func (cr *chiRouter) rootGETHandler(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
 	service, err := cr.createShortenService()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

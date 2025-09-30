@@ -2,12 +2,14 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
 	_model "github.com/ElfAstAhe/url-shortener/internal/model"
 	_repo "github.com/ElfAstAhe/url-shortener/internal/repository"
 	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
 	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
+	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
 )
 
 type Shorter struct {
@@ -23,9 +25,37 @@ func NewShorterService(repo _repo.ShortURIRepository) (*Shorter, error) {
 // ShorterService
 
 func (s *Shorter) GetURL(ctx context.Context, key string) (string, error) {
+	noAuthData, errNoAuth := s.getURLNoAuth(ctx, key)
+	_, errAuth := s.getURLAuth(ctx, key)
+	if errAuth != nil && errors.As(errAuth, &_err.AppSoftRemoved) {
+		return "", errAuth
+	}
+	if errNoAuth != nil {
+		return "", errNoAuth
+	}
+
+	return noAuthData, nil
+}
+
+func (s *Shorter) getURLNoAuth(ctx context.Context, key string) (string, error) {
+	model, err := s.Repository.GetByKey(ctx, key)
+	if err != nil {
+		return "", err
+	}
+	if model == nil {
+		return "", nil
+	}
+
+	return model.OriginalURL.URL.String(), nil
+}
+
+func (s *Shorter) getURLAuth(ctx context.Context, key string) (string, error) {
 	userInfo, err := _auth.UserInfoFromContext(ctx)
 	if err != nil {
 		return "", err
+	}
+	if userInfo == nil {
+		return "", _err.NewAppAuthInfoAbsentError("getURLAuth internal service method", nil)
 	}
 	model, err := s.Repository.GetByKeyUser(ctx, userInfo.UserID, key)
 	if err != nil {
