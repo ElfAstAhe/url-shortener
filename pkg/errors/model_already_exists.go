@@ -7,6 +7,8 @@ type AppModelAlreadyExistsError struct {
 	Entity string
 }
 
+var AppModelAlreadyExists *AppModelAlreadyExistsError
+
 func NewAppModelAlreadyExistsError(ID string, entity string) *AppModelAlreadyExistsError {
 	return &AppModelAlreadyExistsError{
 		ID:     ID,

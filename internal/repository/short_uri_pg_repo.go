@@ -142,7 +142,10 @@ func (pgs *shortURIPgRepo) Create(ctx context.Context, userID string, entity *_m
 		return nil, err
 	}
 	if find != nil {
-		if err := pgs.addUser(ctx, nil, find.ID, userID); err != nil {
+		err := pgs.addUser(ctx, nil, find.ID, userID)
+		if err != nil && errors.As(err, &_err.AppModelAlreadyExists) {
+			return find, err
+		} else if err != nil {
 			return nil, err
 		}
 		return find, errors.New("shortURI already exists")
