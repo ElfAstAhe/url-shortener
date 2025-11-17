@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"os"
 
-	_log "github.com/ElfAstAhe/url-shortener/internal/logger"
-	_model "github.com/ElfAstAhe/url-shortener/internal/model"
+	"github.com/ElfAstAhe/url-shortener/internal/logger"
+	"github.com/ElfAstAhe/url-shortener/internal/model"
 	"go.uber.org/zap"
 )
 
@@ -25,7 +25,7 @@ func NewShortURIUserStorageReader(storagePath string) (*ShortURIUserStorageReade
 	return &ShortURIUserStorageReader{
 		File:   storage,
 		Reader: bufio.NewScanner(storage),
-		log:    _log.Log.Sugar(),
+		log:    logger.Log.Sugar(),
 	}, nil
 }
 
@@ -48,7 +48,7 @@ func NewShortURIUserStorageWriter(storagePath string) (*ShortURIUserStorageWrite
 	return &ShortURIUserStorageWriter{
 		File:   storage,
 		Writer: bufio.NewWriter(storage),
-		log:    _log.Log.Sugar(),
+		log:    logger.Log.Sugar(),
 	}, nil
 }
 
@@ -56,11 +56,11 @@ func (w *ShortURIUserStorageWriter) Close() error {
 	return w.File.Close()
 }
 
-func (r *ShortURIUserStorageReader) LoadData(cache map[string]*_model.ShortURIUser) error {
+func (r *ShortURIUserStorageReader) LoadData(cache map[string]*model.ShortURIUser) error {
 	clear(cache)
 	for r.Reader.Scan() {
 		data := r.Reader.Bytes()
-		var entity _model.ShortURIUser
+		var entity model.ShortURIUser
 		if err := json.Unmarshal(data, &entity); err != nil {
 			r.log.Warn("Failed to unmarshal short URI User", zap.Error(err))
 		}
@@ -74,7 +74,7 @@ func (r *ShortURIUserStorageReader) LoadData(cache map[string]*_model.ShortURIUs
 	return nil
 }
 
-func (w *ShortURIUserStorageWriter) SaveData(cache map[string]*_model.ShortURIUser) error {
+func (w *ShortURIUserStorageWriter) SaveData(cache map[string]*model.ShortURIUser) error {
 	for id, entity := range cache {
 		w.log.Infof("Saving short URI %s to %s", id, w.File.Name())
 		data, err := json.Marshal(entity)

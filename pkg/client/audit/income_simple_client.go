@@ -2,6 +2,7 @@ package audit
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -24,7 +25,7 @@ func NewSimpleClient(baseURL string, timeOut time.Duration) *SimpleClient {
 	}
 }
 
-func (client *SimpleClient) AuditIncome(data *dto.IncomeAuditDto) error {
+func (client *SimpleClient) AuditIncome(ctx context.Context, data *dto.IncomeAuditDto) error {
 	if data == nil {
 		return nil
 	}
@@ -38,7 +39,7 @@ func (client *SimpleClient) AuditIncome(data *dto.IncomeAuditDto) error {
 		return NewClientError("Error marshalling audit data", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, auditURL.String(), bytes.NewBuffer(buffer))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, auditURL.String(), bytes.NewBuffer(buffer))
 	if err != nil {
 		return NewClientError("Error creating request", err)
 	}

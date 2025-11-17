@@ -30,6 +30,8 @@ type Config struct {
 	DBDsn           string      `json:"db_dsn,omitempty" env:"DATABASE_DSN"`
 	StoragePath     string      `json:"storage_path,omitempty" env:"FILE_STORAGE_PATH"`
 	StorageUserPath string      `json:"storage_user_path,omitempty" env:"FILE_STORAGE_USER_PATH"`
+	AuditFile       string      `json:"audit_file,omitempty" env:"AUDIT_FILE"`
+	AuditURL        string      `json:"audit_url,omitempty" env:"AUDIT_URL"`
 }
 
 // Flags
@@ -43,6 +45,8 @@ const (
 	FlagDBInterface     string = "d"
 	FlagStoragePath     string = "f"
 	FlagStorageUserPath string = "fu"
+	FlagAuditFile       string = "audit-file"
+	FlagAuditURL        string = "audit-url"
 )
 
 // Environment variables
@@ -52,6 +56,8 @@ const (
 	EnvStorageFilename     string = "FILE_STORAGE_PATH"
 	EnvStorageUserFilename string = "FILE_STORAGE_USER_PATH"
 	EnvDatabaseDSN         string = "DATABASE_DSN"
+	EnvAuditFile           string = "AUDIT_FILE"
+	EnvAuditURL            string = "AUDIT_URL"
 )
 
 var AppConfig *Config
@@ -153,4 +159,6 @@ func (c *Config) initFlags() {
 	flag.StringVar(&c.DBDsn, FlagDBInterface, DefaultDBDsn, "database dsn")
 	flag.StringVar(&c.StoragePath, FlagStoragePath, DefaultStoragePath, "storage path")
 	flag.StringVar(&c.StorageUserPath, FlagStorageUserPath, DefaultStorageUserPath, "storage user path")
+	flag.StringVar(&c.AuditFile, FlagAuditFile, "", "audit file path")
+	flag.StringVar(&c.AuditURL, FlagAuditURL, "", "audit url")
 }

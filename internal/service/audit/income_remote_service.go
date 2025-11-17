@@ -1,0 +1,32 @@
+package audit
+
+import (
+	"context"
+	"time"
+
+	"github.com/ElfAstAhe/url-shortener/internal/config"
+	"github.com/ElfAstAhe/url-shortener/pkg/client/audit"
+	"github.com/ElfAstAhe/url-shortener/pkg/client/audit/dto"
+)
+
+type IncomeRemoteService struct {
+	client audit.IncomeClient
+}
+
+func NewIncomeRemoteService(appConfig config.Config) *IncomeRemoteService {
+	return &IncomeRemoteService{
+		client: audit.NewSimpleClient(appConfig.AuditURL, 3*time.Second),
+	}
+}
+
+func (i *IncomeRemoteService) Observe(ctx context.Context, dto *dto.IncomeAuditDto) error {
+	return i.client.AuditIncome(ctx, dto)
+}
+
+func (i *IncomeRemoteService) GetID() string {
+	return "REMOTE_INCOME_AUDIT"
+}
+
+func (i *IncomeRemoteService) Close() error {
+	return nil
+}
