@@ -1,17 +1,17 @@
 package repository
 
 import (
-	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
-	_db "github.com/ElfAstAhe/url-shortener/internal/config/db"
+	"github.com/ElfAstAhe/url-shortener/internal/config"
+	"github.com/ElfAstAhe/url-shortener/internal/config/db"
 )
 
 type DBConnCheckRepository interface {
 	CheckDBConn() error
 }
 
-func NewDBConnCheckRepository(db _db.DB) (DBConnCheckRepository, error) {
-	if db.GetDBKind() == _cfg.DBKindPostgres {
-		return newDBConnCheckPgRepo(db)
+func NewDBConnCheckRepository(appDb db.DB) (DBConnCheckRepository, error) {
+	if appDb.GetDBKind() == config.DBKindPostgres {
+		return newDBConnCheckPgRepo(appDb)
 	}
 
 	return newDBConnCheckImMemRepo()

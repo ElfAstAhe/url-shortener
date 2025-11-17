@@ -5,15 +5,15 @@ import (
 	"database/sql"
 	"errors"
 
-	_db "github.com/ElfAstAhe/url-shortener/internal/config/db"
-	_model "github.com/ElfAstAhe/url-shortener/internal/model"
-	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
-	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
+	"github.com/ElfAstAhe/url-shortener/internal/config/db"
+	"github.com/ElfAstAhe/url-shortener/internal/model"
+	"github.com/ElfAstAhe/url-shortener/internal/utils"
+	_errs "github.com/ElfAstAhe/url-shortener/pkg/errors"
 	"github.com/google/uuid"
 )
 
 type shortURIUserPgRepo struct {
-	db _db.DB
+	db db.DB
 }
 
 const (
@@ -35,7 +35,7 @@ const (
 	removeAllShortURIUserByShortURISQL string = `delete from short_uri_users where short_uri_id = $1`
 )
 
-func newShortURIUserPgRepo(db _db.DB) (*shortURIUserPgRepo, error) {
+func newShortURIUserPgRepo(db db.DB) (*shortURIUserPgRepo, error) {
 	if db == nil {
 		return nil, errors.New("db is nil")
 	}
@@ -43,13 +43,13 @@ func newShortURIUserPgRepo(db _db.DB) (*shortURIUserPgRepo, error) {
 	return &shortURIUserPgRepo{db: db}, nil
 }
 
-func (pgsu *shortURIUserPgRepo) Get(ctx context.Context, ID string) (*_model.ShortURIUser, error) {
+func (pgsu *shortURIUserPgRepo) Get(ctx context.Context, ID string) (*model.ShortURIUser, error) {
 	row := pgsu.db.GetDB().QueryRow(getShortURIUserSQL, ID)
 	if row.Err() != nil && !errors.Is(row.Err(), sql.ErrNoRows) {
 		return nil, nil
 	}
 
-	var result = _model.ShortURIUser{}
+	var result = model.ShortURIUser{}
 	// id, short_uri_id, user_id, deleted
 	err := row.Scan(&result.ID, &result.ShortURIID, &result.UserID, &result.Deleted)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -61,13 +61,13 @@ func (pgsu *shortURIUserPgRepo) Get(ctx context.Context, ID string) (*_model.Sho
 	return &result, nil
 }
 
-func (pgsu *shortURIUserPgRepo) GetByUnique(ctx context.Context, userID string, shortURIID string) (*_model.ShortURIUser, error) {
+func (pgsu *shortURIUserPgRepo) GetByUnique(ctx context.Context, userID string, shortURIID string) (*model.ShortURIUser, error) {
 	row := pgsu.db.GetDB().QueryRow(getShortURIUserByUniqueSQL, userID, shortURIID)
 	if row.Err() != nil && !errors.Is(row.Err(), sql.ErrNoRows) {
 		return nil, nil
 	}
 
-	var result = _model.ShortURIUser{}
+	var result = model.ShortURIUser{}
 	// id, short_uri_id, user_id, deleted
 	err := row.Scan(&result.ID, &result.ShortURIID, &result.UserID, &result.Deleted)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -79,16 +79,16 @@ func (pgsu *shortURIUserPgRepo) GetByUnique(ctx context.Context, userID string, 
 	return &result, nil
 }
 
-func (pgsu *shortURIUserPgRepo) ListAllByUser(ctx context.Context, userID string) ([]*_model.ShortURIUser, error) {
-	res := make([]*_model.ShortURIUser, 0)
+func (pgsu *shortURIUserPgRepo) ListAllByUser(ctx context.Context, userID string) ([]*model.ShortURIUser, error) {
+	res := make([]*model.ShortURIUser, 0)
 	rows, err := pgsu.db.GetDB().Query(listShortURIUserAllByUserSQL, userID)
 	if err != nil {
 		return res, err
 	}
-	defer _utl.CloseOnly(rows)
+	defer utils.CloseOnly(rows)
 
 	for rows.Next() {
-		var result = _model.ShortURIUser{}
+		var result = model.ShortURIUser{}
 		// id, short_uri_id, user_id, deleted
 		err := rows.Scan(&result.ID, &result.ShortURIID, &result.UserID, &result.Deleted)
 		if err != nil {
@@ -104,16 +104,16 @@ func (pgsu *shortURIUserPgRepo) ListAllByUser(ctx context.Context, userID string
 	return res, nil
 }
 
-func (pgsu *shortURIUserPgRepo) ListAllByShortURI(ctx context.Context, shortURIID string) ([]*_model.ShortURIUser, error) {
-	res := make([]*_model.ShortURIUser, 0)
+func (pgsu *shortURIUserPgRepo) ListAllByShortURI(ctx context.Context, shortURIID string) ([]*model.ShortURIUser, error) {
+	res := make([]*model.ShortURIUser, 0)
 	rows, err := pgsu.db.GetDB().Query(listShortURIUserAllByShortURISQL, shortURIID)
 	if err != nil {
 		return res, err
 	}
-	defer _utl.CloseOnly(rows)
+	defer utils.CloseOnly(rows)
 
 	for rows.Next() {
-		var result = _model.ShortURIUser{}
+		var result = model.ShortURIUser{}
 		// id, short_uri_id, user_id, deleted
 		err := rows.Scan(&result.ID, &result.ShortURIID, &result.UserID, &result.Deleted)
 		if err != nil {
@@ -129,8 +129,8 @@ func (pgsu *shortURIUserPgRepo) ListAllByShortURI(ctx context.Context, shortURII
 	return res, nil
 }
 
-func (pgsu *shortURIUserPgRepo) Create(ctx context.Context, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
-	if err := _model.ValidateShortURIUser(entity); err != nil {
+func (pgsu *shortURIUserPgRepo) Create(ctx context.Context, entity *model.ShortURIUser) (*model.ShortURIUser, error) {
+	if err := model.ValidateShortURIUser(entity); err != nil {
 		return nil, err
 	}
 
@@ -138,7 +138,7 @@ func (pgsu *shortURIUserPgRepo) Create(ctx context.Context, entity *_model.Short
 	if err != nil {
 		return nil, err
 	}
-	defer _utl.CloseOnly(stmt)
+	defer utils.CloseOnly(stmt)
 
 	res, err := pgsu.CreateStmt(ctx, stmt, entity)
 	if err != nil {
@@ -148,8 +148,8 @@ func (pgsu *shortURIUserPgRepo) Create(ctx context.Context, entity *_model.Short
 	return res, nil
 }
 
-func (pgsu *shortURIUserPgRepo) CreateStmt(ctx context.Context, stmt *sql.Stmt, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
-	if err := _model.ValidateShortURIUser(entity); err != nil {
+func (pgsu *shortURIUserPgRepo) CreateStmt(ctx context.Context, stmt *sql.Stmt, entity *model.ShortURIUser) (*model.ShortURIUser, error) {
+	if err := model.ValidateShortURIUser(entity); err != nil {
 		return nil, err
 	}
 
@@ -158,7 +158,7 @@ func (pgsu *shortURIUserPgRepo) CreateStmt(ctx context.Context, stmt *sql.Stmt, 
 		return nil, err
 	}
 	if find != nil {
-		return find, _err.NewAppModelAlreadyExistsError(entity.ID, "short_uri_user")
+		return find, _errs.NewAppModelAlreadyExistsError(entity.ID, "short_uri_user")
 	}
 
 	newID, err := uuid.NewRandom()
@@ -175,23 +175,23 @@ func (pgsu *shortURIUserPgRepo) CreateStmt(ctx context.Context, stmt *sql.Stmt, 
 	return entity, nil
 }
 
-func (pgsu *shortURIUserPgRepo) Change(ctx context.Context, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
-	if err := _model.ValidateShortURIUser(entity); err != nil {
-		return nil, _err.NewAppModelValidationError("short_uri_user", err)
+func (pgsu *shortURIUserPgRepo) Change(ctx context.Context, entity *model.ShortURIUser) (*model.ShortURIUser, error) {
+	if err := model.ValidateShortURIUser(entity); err != nil {
+		return nil, _errs.NewAppModelValidationError("short_uri_user", err)
 	}
 
 	stmt, err := pgsu.db.GetDB().PrepareContext(ctx, changeShortURIUserSQL)
 	if err != nil {
 		return nil, err
 	}
-	defer _utl.CloseOnly(stmt)
+	defer utils.CloseOnly(stmt)
 
 	return pgsu.ChangeStmt(ctx, stmt, entity)
 }
 
-func (pgsu *shortURIUserPgRepo) ChangeStmt(ctx context.Context, stmt *sql.Stmt, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
-	if err := _model.ValidateShortURIUser(entity); err != nil {
-		return nil, _err.NewAppModelValidationError("short_uri_user", err)
+func (pgsu *shortURIUserPgRepo) ChangeStmt(ctx context.Context, stmt *sql.Stmt, entity *model.ShortURIUser) (*model.ShortURIUser, error) {
+	if err := model.ValidateShortURIUser(entity); err != nil {
+		return nil, _errs.NewAppModelValidationError("short_uri_user", err)
 	}
 
 	_, err := stmt.ExecContext(ctx, entity.ID, entity.ShortURIID, entity.UserID, entity.Deleted)
@@ -211,7 +211,7 @@ func (pgsu *shortURIUserPgRepo) Delete(ctx context.Context, ID string) error {
 	if err != nil {
 		return err
 	}
-	defer _utl.CloseOnly(stmt)
+	defer utils.CloseOnly(stmt)
 
 	return pgsu.DeleteStmt(ctx, stmt, ID)
 }
@@ -238,7 +238,7 @@ func (pgsu *shortURIUserPgRepo) DeleteByUnique(ctx context.Context, userID strin
 	if err != nil {
 		return err
 	}
-	defer _utl.CloseOnly(stmt)
+	defer utils.CloseOnly(stmt)
 
 	return pgsu.DeleteByUniqueStmt(ctx, stmt, userID, shortURIID)
 }
@@ -291,7 +291,7 @@ func (pgsu *shortURIUserPgRepo) DeleteAllByUser(ctx context.Context, userID stri
 	if err != nil {
 		return err
 	}
-	defer _utl.CloseOnly(stmt)
+	defer utils.CloseOnly(stmt)
 
 	return pgsu.DeleteAllByUserStmt(ctx, stmt, userID)
 }
@@ -318,7 +318,7 @@ func (pgsu *shortURIUserPgRepo) DeleteAllByShortURI(ctx context.Context, shortUR
 	if err != nil {
 		return err
 	}
-	defer _utl.CloseOnly(stmt)
+	defer utils.CloseOnly(stmt)
 
 	return pgsu.DeleteAllByShortURIStmt(ctx, stmt, shortURIID)
 }
@@ -345,7 +345,7 @@ func (pgsu *shortURIUserPgRepo) Remove(ctx context.Context, ID string) error {
 	if err != nil {
 		return err
 	}
-	defer _utl.CloseOnly(stmt)
+	defer utils.CloseOnly(stmt)
 
 	return pgsu.RemoveStmt(ctx, stmt, ID)
 }
@@ -372,7 +372,7 @@ func (pgsu *shortURIUserPgRepo) RemoveByUnique(ctx context.Context, userID strin
 	if err != nil {
 		return err
 	}
-	defer _utl.CloseOnly(stmp)
+	defer utils.CloseOnly(stmp)
 
 	return pgsu.RemoveByUniqueStmt(ctx, stmp, userID, shortURIID)
 }
@@ -425,7 +425,7 @@ func (pgsu *shortURIUserPgRepo) RemoveAllByUser(ctx context.Context, userID stri
 	if err != nil {
 		return err
 	}
-	defer _utl.CloseOnly(stmt)
+	defer utils.CloseOnly(stmt)
 
 	return pgsu.RemoveAllByUserStmt(ctx, stmt, userID)
 }
@@ -452,7 +452,7 @@ func (pgsu *shortURIUserPgRepo) RemoveAllByShortURI(ctx context.Context, shortUR
 	if err != nil {
 		return err
 	}
-	defer _utl.CloseOnly(stmt)
+	defer utils.CloseOnly(stmt)
 
 	return pgsu.RemoveAllByShortURIStmt(ctx, stmt, shortURIID)
 }

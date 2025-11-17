@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
+	"github.com/ElfAstAhe/url-shortener/pkg/errors"
 	"github.com/google/uuid"
 )
 
@@ -47,7 +47,7 @@ func UserInfoFromContext(ctx context.Context) (*UserInfo, error) {
 		return res, nil
 	}
 
-	return nil, _err.NewAppAuthInfoAbsentError("user info not found in context", nil)
+	return nil, errors.NewAppAuthInfoAbsentError("user info not found in context", nil)
 }
 
 func BuildRandomUserInfo() *UserInfo {

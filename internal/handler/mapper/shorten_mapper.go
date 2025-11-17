@@ -1,24 +1,24 @@
 package mapper
 
 import (
-	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
-	_dto "github.com/ElfAstAhe/url-shortener/internal/handler/dto"
-	_model "github.com/ElfAstAhe/url-shortener/internal/model"
-	_srv "github.com/ElfAstAhe/url-shortener/internal/service"
-	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
+	"github.com/ElfAstAhe/url-shortener/internal/config"
+	"github.com/ElfAstAhe/url-shortener/internal/handler/dto"
+	"github.com/ElfAstAhe/url-shortener/internal/model"
+	"github.com/ElfAstAhe/url-shortener/internal/service"
+	"github.com/ElfAstAhe/url-shortener/internal/utils"
 )
 
-func ShortenCreateResponseFromKey(key string) (*_dto.ShortenCreateResponse, error) {
+func ShortenCreateResponseFromKey(key string) (*dto.ShortenCreateResponse, error) {
 	if key == "" {
 		return nil, nil
 	}
 
-	return &_dto.ShortenCreateResponse{
-		Result: _utl.BuildNewURI(_cfg.AppConfig.BaseURL, key),
+	return &dto.ShortenCreateResponse{
+		Result: utils.BuildNewURI(config.AppConfig.BaseURL, key),
 	}, nil
 }
 
-func ShortenCreateResponseFromEntity(entity *_model.ShortURI) (*_dto.ShortenCreateResponse, error) {
+func ShortenCreateResponseFromEntity(entity *model.ShortURI) (*dto.ShortenCreateResponse, error) {
 	if entity == nil {
 		return nil, nil
 	}
@@ -26,13 +26,13 @@ func ShortenCreateResponseFromEntity(entity *_model.ShortURI) (*_dto.ShortenCrea
 	return ShortenCreateResponseFromKey(entity.Key)
 }
 
-func ShortenBatchResponseFromKeys(source map[string]string) ([]*_dto.ShortenBatchResponseItem, error) {
+func ShortenBatchResponseFromKeys(source map[string]string) ([]*dto.ShortenBatchResponseItem, error) {
 	if len(source) == 0 {
-		return make([]*_dto.ShortenBatchResponseItem, 0), nil
+		return make([]*dto.ShortenBatchResponseItem, 0), nil
 	}
-	res := make([]*_dto.ShortenBatchResponseItem, 0)
+	res := make([]*dto.ShortenBatchResponseItem, 0)
 	for key, value := range source {
-		res = append(res, &_dto.ShortenBatchResponseItem{
+		res = append(res, &dto.ShortenBatchResponseItem{
 			CorrelationID: key,
 			ShortURL:      value,
 		})
@@ -41,22 +41,22 @@ func ShortenBatchResponseFromKeys(source map[string]string) ([]*_dto.ShortenBatc
 	return res, nil
 }
 
-func ShortenBatchResponseFromEntity(source map[string]*_model.ShortURI) ([]*_dto.ShortenBatchResponseItem, error) {
+func ShortenBatchResponseFromEntity(source map[string]*model.ShortURI) ([]*dto.ShortenBatchResponseItem, error) {
 	if len(source) == 0 {
-		return make([]*_dto.ShortenBatchResponseItem, 0), nil
+		return make([]*dto.ShortenBatchResponseItem, 0), nil
 	}
-	res := make([]*_dto.ShortenBatchResponseItem, 0, len(source))
+	res := make([]*dto.ShortenBatchResponseItem, 0, len(source))
 	for key, value := range source {
-		res = append(res, &_dto.ShortenBatchResponseItem{
+		res = append(res, &dto.ShortenBatchResponseItem{
 			CorrelationID: key,
-			ShortURL:      _utl.BuildNewURI(_cfg.AppConfig.BaseURL, value.Key),
+			ShortURL:      utils.BuildNewURI(config.AppConfig.BaseURL, value.Key),
 		})
 	}
 
 	return res, nil
 }
 
-func ShortenBatchFromDto(source []*_dto.ShortenBatchCreateItem) (map[string]string, error) {
+func ShortenBatchFromDto(source []*dto.ShortenBatchCreateItem) (map[string]string, error) {
 	res := make(map[string]string)
 	if len(source) == 0 {
 		return res, nil
@@ -69,20 +69,20 @@ func ShortenBatchFromDto(source []*_dto.ShortenBatchCreateItem) (map[string]stri
 	return res, nil
 }
 
-func UserShortensFromModel(source map[string]string) ([]*_dto.UserShorten, error) {
-	res := make([]*_dto.UserShorten, 0)
+func UserShortensFromModel(source map[string]string) ([]*dto.UserShorten, error) {
+	res := make([]*dto.UserShorten, 0)
 	if len(source) == 0 {
 		return nil, nil
 	}
 	for key, value := range source {
-		res = append(res, _dto.NewUserShorten(value, key))
+		res = append(res, dto.NewUserShorten(value, key))
 	}
 
 	return res, nil
 }
 
-func UserBatchDeletesFromDto(source _dto.ShortenBatchDeleteRequest) (_srv.UserBatchDeletes, error) {
-	res := make(_srv.UserBatchDeletes, 0)
+func UserBatchDeletesFromDto(source dto.ShortenBatchDeleteRequest) (service.UserBatchDeletes, error) {
+	res := make(service.UserBatchDeletes, 0)
 	if len(source) == 0 {
 		return res, nil
 	}

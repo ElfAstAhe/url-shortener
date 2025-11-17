@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/url"
 
-	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
+	_errs "github.com/ElfAstAhe/url-shortener/pkg/errors"
 	"github.com/google/uuid"
 )
 
@@ -21,7 +21,7 @@ func NewShortURI(originalURL string, key string) (*ShortURI, error) {
 func NewShortURIFull(ID string, originalURL string, key string) (*ShortURI, error) {
 	origURL, err := url.Parse(originalURL)
 	if err != nil {
-		return nil, _err.NewInvalidOriginalURLError(originalURL)
+		return nil, _errs.NewInvalidOriginalURLError(originalURL)
 	}
 
 	return &ShortURI{

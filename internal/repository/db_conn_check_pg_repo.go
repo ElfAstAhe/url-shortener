@@ -5,27 +5,27 @@ import (
 	"errors"
 	"time"
 
-	_db "github.com/ElfAstAhe/url-shortener/internal/config/db"
+	"github.com/ElfAstAhe/url-shortener/internal/config/db"
 )
 
 type DBConnCheckPgRepo struct {
-	DB _db.DB
+	DB db.DB
 }
 
-func newDBConnCheckPgRepo(db _db.DB) (*DBConnCheckPgRepo, error) {
-	if db == nil {
+func newDBConnCheckPgRepo(appDb db.DB) (*DBConnCheckPgRepo, error) {
+	if appDb == nil {
 		return nil, errors.New("db is nil")
 	}
 
 	return &DBConnCheckPgRepo{
-		DB: db,
+		DB: appDb,
 	}, nil
 }
 
 // Closer
 
 func (pgR *DBConnCheckPgRepo) Close() error {
-	return _db.CloseDB(pgR.DB)
+	return db.CloseDB(pgR.DB)
 }
 
 // ========

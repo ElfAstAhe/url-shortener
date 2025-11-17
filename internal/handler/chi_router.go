@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
-	_compress "github.com/ElfAstAhe/url-shortener/internal/handler/middleware/compress"
-	_log "github.com/ElfAstAhe/url-shortener/internal/handler/middleware/logger"
+	"github.com/ElfAstAhe/url-shortener/internal/config"
+	"github.com/ElfAstAhe/url-shortener/internal/handler/middleware/compress"
+	"github.com/ElfAstAhe/url-shortener/internal/handler/middleware/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
@@ -14,11 +14,11 @@ import (
 
 type chiRouter struct {
 	Router *chi.Mux
-	config *_cfg.Config
+	config *config.Config
 	log    *zap.SugaredLogger
 }
 
-func NewRouter(config *_cfg.Config, logger *zap.SugaredLogger) AppRouter {
+func NewRouter(config *config.Config, logger *zap.SugaredLogger) AppRouter {
 	appRouter := &chiRouter{
 		Router: chi.NewRouter(),
 		config: config,
@@ -41,9 +41,11 @@ func (cr *chiRouter) GetRouter() http.Handler {
 func (cr *chiRouter) buildRoutes(router *chi.Mux) {
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
-	router.Use(_compress.CustomCompress(_compress.DefaultCompressionLevel, _compress.ContentTypeApplicationJSON, _compress.ContentTypeTextHTML))
-	router.Use(_compress.CustomDecompress)
-	router.Use(_log.CustomInfoHTTPLogger)
+	router.Use(compress.CustomCompress(compress.DefaultCompressionLevel,
+		compress.ContentTypeApplicationJSON,
+		compress.ContentTypeTextHTML))
+	router.Use(compress.CustomDecompress)
+	router.Use(logger.CustomInfoHTTPLogger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Timeout(60 * time.Second))
 

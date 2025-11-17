@@ -3,32 +3,32 @@ package handler
 import (
 	"net/http"
 
-	_db "github.com/ElfAstAhe/url-shortener/internal/config/db"
-	_repo "github.com/ElfAstAhe/url-shortener/internal/repository"
-	_srv "github.com/ElfAstAhe/url-shortener/internal/service"
-	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
+	"github.com/ElfAstAhe/url-shortener/internal/config/db"
+	"github.com/ElfAstAhe/url-shortener/internal/repository"
+	"github.com/ElfAstAhe/url-shortener/internal/service"
+	"github.com/ElfAstAhe/url-shortener/internal/service/auth"
 )
 
-func (cr *chiRouter) createShortenService() (_srv.ShorterService, error) {
-	db, err := _db.NewDB(cr.config.DBKind, cr.config.DBDsn)
+func (cr *chiRouter) createShortenService() (service.ShorterService, error) {
+	appDb, err := db.NewDB(cr.config.DBKind, cr.config.DBDsn)
 	if err != nil {
 		return nil, err
 	}
-	repository, err := _repo.NewShortURIRepository(db)
+	repo, err := repository.NewShortURIRepository(appDb)
 	if err != nil {
 		return nil, err
 	}
 
-	return _srv.NewShorterService(repository)
+	return service.NewShorterService(repo)
 }
 
-func (cr *chiRouter) createDBConnCheckService() (_repo.DBConnCheckRepository, error) {
-	db, err := _db.NewPGIter10Gap(cr.config.DBDsn)
+func (cr *chiRouter) createDBConnCheckService() (repository.DBConnCheckRepository, error) {
+	appDb, err := db.NewPGIter10Gap(cr.config.DBDsn)
 	if err != nil {
 		return nil, err
 	}
 
-	return _repo.NewDBConnCheckRepository(db)
+	return repository.NewDBConnCheckRepository(appDb)
 }
 
 func (cr *chiRouter) iter14ProcessUnauthorized(rw http.ResponseWriter, message string) error {
@@ -61,15 +61,15 @@ func (cr *chiRouter) iter14ProcessNoContent(rw http.ResponseWriter, message stri
 	return nil
 }
 
-func (cr *chiRouter) iter14SetAuthCookie(rw http.ResponseWriter) (*_auth.UserInfo, error) {
-	userInfo := _auth.BuildRandomUserInfo()
-	tokenString, err := _auth.NewJWTStringFromUserInfo(userInfo)
+func (cr *chiRouter) iter14SetAuthCookie(rw http.ResponseWriter) (*auth.UserInfo, error) {
+	userInfo := auth.BuildRandomUserInfo()
+	tokenString, err := auth.NewJWTStringFromUserInfo(userInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	http.SetCookie(rw, &http.Cookie{
-		Name:     _auth.CookieName,
+		Name:     auth.CookieName,
 		Value:    tokenString,
 		SameSite: http.SameSiteStrictMode,
 	})

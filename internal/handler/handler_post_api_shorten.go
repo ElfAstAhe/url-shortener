@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"net/http"
 
-	_dto "github.com/ElfAstAhe/url-shortener/internal/handler/dto"
-	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
-	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
-	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
+	"github.com/ElfAstAhe/url-shortener/internal/handler/dto"
+	"github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
+	"github.com/ElfAstAhe/url-shortener/internal/service/auth"
+	"github.com/ElfAstAhe/url-shortener/internal/utils"
 )
 
 func (cr *chiRouter) shortenPostHandler(rw http.ResponseWriter, r *http.Request) {
-	userInfo, err := _auth.UserInfoFromRequestJWT(r)
+	userInfo, err := auth.UserInfoFromRequestJWT(r)
 	if err != nil {
 		// Attention!!! For iteration 14 ONLY, remove in future!
 		message := fmt.Sprintf("userInfoFromRequestJWT error: [%v]", err)
@@ -25,7 +25,7 @@ func (cr *chiRouter) shortenPostHandler(rw http.ResponseWriter, r *http.Request)
 	}
 
 	dec := json.NewDecoder(r.Body)
-	var request _dto.ShortenCreateRequest
+	var request dto.ShortenCreateRequest
 	if err := dec.Decode(&request); err != nil {
 		message := fmt.Sprintf("Error deserializing request JSON body: [%s]", err)
 		cr.log.Error(message)
@@ -50,9 +50,9 @@ func (cr *chiRouter) shortenPostHandler(rw http.ResponseWriter, r *http.Request)
 
 		return
 	}
-	defer _utl.CloseOnly(service)
+	defer utils.CloseOnly(service)
 
-	ctx := context.WithValue(r.Context(), _auth.ContextUserInfo, userInfo)
+	ctx := context.WithValue(r.Context(), auth.ContextUserInfo, userInfo)
 	key, conflictErr := service.Store(ctx, request.URL)
 	if conflictErr != nil && key == "" {
 		message := fmt.Sprintf("Error storing URL [%s]", conflictErr)
@@ -62,7 +62,7 @@ func (cr *chiRouter) shortenPostHandler(rw http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	resp, _ := _mapper.ShortenCreateResponseFromKey(key)
+	resp, _ := mapper.ShortenCreateResponseFromKey(key)
 
 	rw.Header().Set("Content-Type", "application/json")
 	if conflictErr != nil {

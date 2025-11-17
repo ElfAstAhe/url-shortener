@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"net/http"
 
-	_dto "github.com/ElfAstAhe/url-shortener/internal/handler/dto"
-	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
-	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
-	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
+	"github.com/ElfAstAhe/url-shortener/internal/handler/dto"
+	"github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
+	"github.com/ElfAstAhe/url-shortener/internal/service/auth"
+	"github.com/ElfAstAhe/url-shortener/internal/utils"
 )
 
 func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Request) {
-	userInfo, err := _auth.UserInfoFromRequestJWT(r)
+	userInfo, err := auth.UserInfoFromRequestJWT(r)
 	if err != nil {
 		// Attention!!! For iteration 14 ONLY, remove in future!
 		message := fmt.Sprintf("userInfoFromRequestJWT error: [%v]", err)
@@ -29,7 +29,7 @@ func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Req
 	}
 
 	dec := json.NewDecoder(r.Body)
-	var income = make([]*_dto.ShortenBatchCreateItem, 0)
+	var income = make([]*dto.ShortenBatchCreateItem, 0)
 	if err := dec.Decode(&income); err != nil {
 		message := fmt.Sprintf("Error deserializing request JSON body: [%s]", err)
 		cr.log.Error(message)
@@ -38,7 +38,7 @@ func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Req
 		return
 	}
 
-	serviceBatch, err := _mapper.ShortenBatchFromDto(income)
+	serviceBatch, err := mapper.ShortenBatchFromDto(income)
 	if err != nil {
 		message := fmt.Sprintf("Error map income data into internal structs: [%s]", err)
 		cr.log.Error(message)
@@ -55,9 +55,9 @@ func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Req
 
 		return
 	}
-	defer _utl.CloseOnly(service)
+	defer utils.CloseOnly(service)
 
-	ctx := context.WithValue(r.Context(), _auth.ContextUserInfo, userInfo)
+	ctx := context.WithValue(r.Context(), auth.ContextUserInfo, userInfo)
 	serviceBatchResult, err := service.BatchStore(ctx, serviceBatch)
 	if err != nil {
 		message := fmt.Sprintf("Error processing batch data: [%s]", err)
@@ -67,7 +67,7 @@ func (cr *chiRouter) shortenBatchPostHandler(rw http.ResponseWriter, r *http.Req
 		return
 	}
 
-	respBatch, err := _mapper.ShortenBatchResponseFromKeys(serviceBatchResult)
+	respBatch, err := mapper.ShortenBatchResponseFromKeys(serviceBatchResult)
 	if err != nil {
 		message := fmt.Sprintf("Error converting batch data: [%s]", err)
 		cr.log.Error(message)

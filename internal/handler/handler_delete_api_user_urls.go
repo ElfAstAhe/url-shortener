@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"net/http"
 
-	_dto "github.com/ElfAstAhe/url-shortener/internal/handler/dto"
-	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
-	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
-	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
+	"github.com/ElfAstAhe/url-shortener/internal/handler/dto"
+	"github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
+	"github.com/ElfAstAhe/url-shortener/internal/service/auth"
+	"github.com/ElfAstAhe/url-shortener/internal/utils"
 )
 
 func (cr *chiRouter) userUrlsDeleteHandler(rw http.ResponseWriter, r *http.Request) {
-	userInfo, err := _auth.UserInfoFromRequestJWT(r)
+	userInfo, err := auth.UserInfoFromRequestJWT(r)
 	if err != nil {
 		message := fmt.Sprintf("User info from JWT is invalid: [%v]", err)
 		cr.log.Error(message)
@@ -23,9 +23,9 @@ func (cr *chiRouter) userUrlsDeleteHandler(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var dto = make(_dto.ShortenBatchDeleteRequest, 0)
+	var incomeData = make(dto.ShortenBatchDeleteRequest, 0)
 	dec := json.NewDecoder(r.Body)
-	if err := dec.Decode(&dto); err != nil {
+	if err := dec.Decode(&incomeData); err != nil {
 		message := fmt.Sprintf("error deserialize JSON data: [%v]", err)
 		cr.log.Error(message)
 		http.Error(rw, message, http.StatusInternalServerError)
@@ -33,16 +33,16 @@ func (cr *chiRouter) userUrlsDeleteHandler(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	ctx := context.WithValue(context.Background(), _auth.ContextUserInfo, userInfo)
+	ctx := context.WithValue(context.Background(), auth.ContextUserInfo, userInfo)
 
-	go cr.batchDeleteAsync(ctx, dto)
+	go cr.batchDeleteAsync(ctx, incomeData)
 
 	rw.WriteHeader(http.StatusAccepted)
 
 	cr.log.Debug("Done")
 }
 
-func (cr *chiRouter) batchDeleteAsync(ctx context.Context, request _dto.ShortenBatchDeleteRequest) {
+func (cr *chiRouter) batchDeleteAsync(ctx context.Context, request dto.ShortenBatchDeleteRequest) {
 	// create service instance
 	service, err := cr.createShortenService()
 	if err != nil {
@@ -50,10 +50,10 @@ func (cr *chiRouter) batchDeleteAsync(ctx context.Context, request _dto.ShortenB
 
 		return
 	}
-	defer _utl.CloseOnly(service)
+	defer utils.CloseOnly(service)
 
 	// map into service format
-	source, err := _mapper.UserBatchDeletesFromDto(request)
+	source, err := mapper.UserBatchDeletesFromDto(request)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Error map batch deletes failed: [%v]", err))
 

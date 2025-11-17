@@ -4,20 +4,20 @@ import (
 	"database/sql"
 	"sync"
 
-	_model "github.com/ElfAstAhe/url-shortener/internal/model"
+	"github.com/ElfAstAhe/url-shortener/internal/model"
 )
 
 type inMemoryDB struct {
 	DBKind string
 
 	// ShortURI map key is short uri entity id attribute
-	ShortURI map[string]*_model.ShortURI
+	ShortURI map[string]*model.ShortURI
 
 	// ShortURIAudit map key is short uri audit entity id attribute
-	ShortURIAudit map[string]*_model.ShortURIAudit
+	ShortURIAudit map[string]*model.ShortURIAudit
 
 	// ShortURIUser map key is short uri user entity id attribute
-	ShortURIUser map[string]*_model.ShortURIUser
+	ShortURIUser map[string]*model.ShortURIUser
 
 	shortURIAnchor     sync.RWMutex
 	shortURIUserAnchor sync.RWMutex
@@ -31,9 +31,9 @@ func newInMemoryDB(kind string) (*inMemoryDB, error) {
 	}
 
 	inMemDB = &inMemoryDB{
-		ShortURI:      make(map[string]*_model.ShortURI),
-		ShortURIAudit: make(map[string]*_model.ShortURIAudit),
-		ShortURIUser:  make(map[string]*_model.ShortURIUser),
+		ShortURI:      make(map[string]*model.ShortURI),
+		ShortURIAudit: make(map[string]*model.ShortURIAudit),
+		ShortURIUser:  make(map[string]*model.ShortURIUser),
 		DBKind:        kind,
 	}
 
@@ -76,15 +76,15 @@ func (db *inMemoryDB) GetShortURIUserRWMutex() *sync.RWMutex {
 	return &db.shortURIUserAnchor
 }
 
-func (db *inMemoryDB) GetShortURICache() map[string]*_model.ShortURI {
+func (db *inMemoryDB) GetShortURICache() map[string]*model.ShortURI {
 	return db.ShortURI
 }
 
-func (db *inMemoryDB) GetShortURIAuditCache() map[string]*_model.ShortURIAudit {
+func (db *inMemoryDB) GetShortURIAuditCache() map[string]*model.ShortURIAudit {
 	return db.ShortURIAudit
 }
 
-func (db *inMemoryDB) GetShortURIUserCache() map[string]*_model.ShortURIUser {
+func (db *inMemoryDB) GetShortURIUserCache() map[string]*model.ShortURIUser {
 	return db.ShortURIUser
 }
 

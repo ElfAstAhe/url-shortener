@@ -1,7 +1,7 @@
 package logger
 
 import (
-	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
+	"github.com/ElfAstAhe/url-shortener/internal/config"
 	"go.uber.org/zap"
 )
 
@@ -13,10 +13,10 @@ func Initialize(level string, stage string) error {
 		return err
 	}
 
-	config := getConfigByStage(stage)
-	config.Level = zapLevel
+	conf := getConfigByStage(stage)
+	conf.Level = zapLevel
 
-	zl, err := config.Build()
+	zl, err := conf.Build()
 	if err != nil {
 		return err
 	}
@@ -27,13 +27,13 @@ func Initialize(level string, stage string) error {
 }
 
 func getConfigByStage(stage string) *zap.Config {
-	var config zap.Config
+	var conf zap.Config
 	switch stage {
-	case _cfg.ProjectStageProduction:
-		config = zap.NewProductionConfig()
+	case config.ProjectStageProduction:
+		conf = zap.NewProductionConfig()
 	default:
-		config = zap.NewDevelopmentConfig()
+		conf = zap.NewDevelopmentConfig()
 	}
 
-	return &config
+	return &conf
 }

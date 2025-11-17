@@ -3,7 +3,7 @@ package db
 import (
 	"database/sql"
 
-	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
+	"github.com/ElfAstAhe/url-shortener/internal/config"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -27,7 +27,7 @@ func newPostgresqlDB(kind string, dsn string) (*postgresqlDB, error) {
 }
 
 func NewPGIter10Gap(dsn string) (DB, error) {
-	return newPostgresqlDB(_cfg.DBKindPostgres, dsn)
+	return newPostgresqlDB(config.DBKindPostgres, dsn)
 }
 
 // Closer

@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"net/http"
 
-	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
-	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
-	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
+	"github.com/ElfAstAhe/url-shortener/internal/service/auth"
+	"github.com/ElfAstAhe/url-shortener/internal/utils"
+	_errs "github.com/ElfAstAhe/url-shortener/pkg/errors"
 	"github.com/go-chi/chi/v5"
 )
 
 func (cr *chiRouter) rootGETHandler(w http.ResponseWriter, r *http.Request) {
-	userInfo, err := _auth.UserInfoFromRequestJWT(r)
+	userInfo, err := auth.UserInfoFromRequestJWT(r)
 	if err != nil {
 		message := fmt.Sprintf("userInfoFromRequestJWT error: [%v]", err)
 		cr.log.Warn(message)
@@ -32,12 +32,12 @@ func (cr *chiRouter) rootGETHandler(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	defer _utl.CloseOnly(service)
+	defer utils.CloseOnly(service)
 
-	ctx := context.WithValue(r.Context(), _auth.ContextUserInfo, userInfo)
+	ctx := context.WithValue(r.Context(), auth.ContextUserInfo, userInfo)
 	fullURL, err := service.GetURL(ctx, key)
 	if err != nil {
-		if errors.As(err, &_err.AppSoftRemoved) {
+		if errors.As(err, &_errs.AppSoftRemoved) {
 			cr.log.Warn(err.Error())
 			http.Error(w, err.Error(), http.StatusGone)
 

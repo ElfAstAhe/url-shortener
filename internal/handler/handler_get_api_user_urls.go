@@ -7,16 +7,16 @@ import (
 	"fmt"
 	"net/http"
 
-	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
-	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
-	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
-	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
+	"github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
+	"github.com/ElfAstAhe/url-shortener/internal/service/auth"
+	"github.com/ElfAstAhe/url-shortener/internal/utils"
+	_errs "github.com/ElfAstAhe/url-shortener/pkg/errors"
 )
 
 func (cr *chiRouter) userUrlsGetHandler(rw http.ResponseWriter, r *http.Request) {
-	userInfo, err := _auth.UserInfoFromRequestJWT(r)
+	userInfo, err := auth.UserInfoFromRequestJWT(r)
 	if err != nil {
-		if errors.As(err, &_err.AppAuthInfoAbsent) {
+		if errors.As(err, &_errs.AppAuthInfoAbsent) {
 			message := fmt.Sprintf("User info absent from app auth cookie [%v]", err)
 			cr.log.Warn(message)
 
@@ -48,9 +48,9 @@ func (cr *chiRouter) userUrlsGetHandler(rw http.ResponseWriter, r *http.Request)
 
 		return
 	}
-	defer _utl.CloseOnly(service)
+	defer utils.CloseOnly(service)
 
-	ctx := context.WithValue(r.Context(), _auth.ContextUserInfo, userInfo)
+	ctx := context.WithValue(r.Context(), auth.ContextUserInfo, userInfo)
 
 	modelData, err := service.GetAllUserShorts(ctx, userInfo.UserID)
 	if err != nil {
@@ -61,7 +61,7 @@ func (cr *chiRouter) userUrlsGetHandler(rw http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	data, err := _mapper.UserShortensFromModel(modelData)
+	data, err := mapper.UserShortensFromModel(modelData)
 	if err != nil {
 		message := fmt.Sprintf("Error map user shortens: [%s]", err)
 		cr.log.Error(message)

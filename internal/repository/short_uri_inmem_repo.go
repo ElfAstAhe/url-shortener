@@ -5,24 +5,24 @@ import (
 	"errors"
 	"sync"
 
-	_db "github.com/ElfAstAhe/url-shortener/internal/config/db"
-	_log "github.com/ElfAstAhe/url-shortener/internal/logger"
-	_model "github.com/ElfAstAhe/url-shortener/internal/model"
-	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
+	"github.com/ElfAstAhe/url-shortener/internal/config/db"
+	"github.com/ElfAstAhe/url-shortener/internal/logger"
+	"github.com/ElfAstAhe/url-shortener/internal/model"
+	_errs "github.com/ElfAstAhe/url-shortener/pkg/errors"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
 type shortURIInMemRepo struct {
-	Cache    _db.InMemoryCache
+	Cache    db.InMemoryCache
 	userRepo ShortURIUserRepository
 	log      *zap.SugaredLogger
 }
 
-func newShortURIInMemRepo(db _db.DB) (*shortURIInMemRepo, error) {
-	if cache, ok := db.(_db.InMemoryCache); ok {
-		userRepo, err := NewShortURIUserRepository(db)
+func newShortURIInMemRepo(appDb db.DB) (*shortURIInMemRepo, error) {
+	if cache, ok := appDb.(db.InMemoryCache); ok {
+		userRepo, err := NewShortURIUserRepository(appDb)
 		if err != nil {
 			return nil, err
 		}
@@ -30,14 +30,14 @@ func newShortURIInMemRepo(db _db.DB) (*shortURIInMemRepo, error) {
 		return &shortURIInMemRepo{
 			Cache:    cache,
 			userRepo: userRepo,
-			log:      _log.Log.Sugar(),
+			log:      logger.Log.Sugar(),
 		}, nil
 	}
 
-	return nil, _err.NewAppInvalidArgument("db param does not implement InMemoryCache")
+	return nil, _errs.NewAppInvalidArgument("db param does not implement InMemoryCache")
 }
 
-func (ims *shortURIInMemRepo) Get(ctx context.Context, id string) (*_model.ShortURI, error) {
+func (ims *shortURIInMemRepo) Get(ctx context.Context, id string) (*model.ShortURI, error) {
 	ims.Cache.GetShortURIRWMutex().RLock()
 	defer ims.Cache.GetShortURIRWMutex().RUnlock()
 	res := ims.Cache.GetShortURICache()[id]
@@ -45,7 +45,7 @@ func (ims *shortURIInMemRepo) Get(ctx context.Context, id string) (*_model.Short
 	return res, nil
 }
 
-func (ims *shortURIInMemRepo) GetByKey(ctx context.Context, key string) (*_model.ShortURI, error) {
+func (ims *shortURIInMemRepo) GetByKey(ctx context.Context, key string) (*model.ShortURI, error) {
 	if key == "" {
 		return nil, nil
 	}
@@ -61,7 +61,7 @@ func (ims *shortURIInMemRepo) GetByKey(ctx context.Context, key string) (*_model
 	return nil, nil
 }
 
-func (ims *shortURIInMemRepo) GetByKeyUser(ctx context.Context, userID string, key string) (*_model.ShortURI, error) {
+func (ims *shortURIInMemRepo) GetByKeyUser(ctx context.Context, userID string, key string) (*model.ShortURI, error) {
 	if userID == "" {
 		return nil, nil
 	}
@@ -85,14 +85,14 @@ func (ims *shortURIInMemRepo) GetByKeyUser(ctx context.Context, userID string, k
 		return nil, nil
 	}
 	if userLink.Deleted {
-		return nil, _err.NewAppSoftRemovedError("short_uri", nil)
+		return nil, _errs.NewAppSoftRemovedError("short_uri", nil)
 	}
 
 	return entity, nil
 }
 
-func (ims *shortURIInMemRepo) Create(ctx context.Context, userID string, entity *_model.ShortURI) (*_model.ShortURI, error) {
-	if err := _model.ValidateShortURI(entity); err != nil {
+func (ims *shortURIInMemRepo) Create(ctx context.Context, userID string, entity *model.ShortURI) (*model.ShortURI, error) {
+	if err := model.ValidateShortURI(entity); err != nil {
 		return nil, err
 	}
 
@@ -125,8 +125,8 @@ func (ims *shortURIInMemRepo) Create(ctx context.Context, userID string, entity 
 	return entity, nil
 }
 
-func (ims *shortURIInMemRepo) BatchCreate(ctx context.Context, userID string, batch map[string]*_model.ShortURI) (map[string]*_model.ShortURI, error) {
-	res := make(map[string]*_model.ShortURI)
+func (ims *shortURIInMemRepo) BatchCreate(ctx context.Context, userID string, batch map[string]*model.ShortURI) (map[string]*model.ShortURI, error) {
+	res := make(map[string]*model.ShortURI)
 	if len(batch) == 0 {
 		return res, nil
 	}
@@ -142,7 +142,7 @@ func (ims *shortURIInMemRepo) BatchCreate(ctx context.Context, userID string, ba
 	return res, nil
 }
 
-func (ims *shortURIInMemRepo) ListAllByUser(ctx context.Context, userID string) ([]*_model.ShortURI, error) {
+func (ims *shortURIInMemRepo) ListAllByUser(ctx context.Context, userID string) ([]*model.ShortURI, error) {
 	if userID == "" {
 		return nil, nil
 	}
@@ -155,8 +155,8 @@ func (ims *shortURIInMemRepo) ListAllByUser(ctx context.Context, userID string) 
 	return ims.listAllByLinks(ctx, entityUserLinks)
 }
 
-func (ims *shortURIInMemRepo) ListAllByKeys(ctx context.Context, keys []string) ([]*_model.ShortURI, error) {
-	res := make([]*_model.ShortURI, 0)
+func (ims *shortURIInMemRepo) ListAllByKeys(ctx context.Context, keys []string) ([]*model.ShortURI, error) {
+	res := make([]*model.ShortURI, 0)
 	if len(keys) == 0 {
 		return res, nil
 	}
@@ -309,8 +309,8 @@ func (ims *shortURIInMemRepo) listIdsByKeys(ctx context.Context, keys []string) 
 	return res, nil
 }
 
-func (ims *shortURIInMemRepo) listAllByLinks(ctx context.Context, userLinks []*_model.ShortURIUser) ([]*_model.ShortURI, error) {
-	res := make([]*_model.ShortURI, 0)
+func (ims *shortURIInMemRepo) listAllByLinks(ctx context.Context, userLinks []*model.ShortURIUser) ([]*model.ShortURI, error) {
+	res := make([]*model.ShortURI, 0)
 	if len(userLinks) == 0 {
 		return res, nil
 	}
@@ -336,7 +336,7 @@ func (ims *shortURIInMemRepo) addUser(ctx context.Context, ID string, userID str
 		return nil
 	}
 
-	entity, err := _model.NewShortURIUser(ID, userID)
+	entity, err := model.NewShortURIUser(ID, userID)
 	if err != nil {
 		return err
 	}

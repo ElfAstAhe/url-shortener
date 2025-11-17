@@ -4,20 +4,20 @@ import (
 	"context"
 	"database/sql"
 
-	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
-	_db "github.com/ElfAstAhe/url-shortener/internal/config/db"
-	_model "github.com/ElfAstAhe/url-shortener/internal/model"
+	"github.com/ElfAstAhe/url-shortener/internal/config"
+	"github.com/ElfAstAhe/url-shortener/internal/config/db"
+	"github.com/ElfAstAhe/url-shortener/internal/model"
 )
 
 type ShortURIUserRepository interface {
-	Get(ctx context.Context, ID string) (*_model.ShortURIUser, error)
-	GetByUnique(ctx context.Context, userID string, shortURIID string) (*_model.ShortURIUser, error)
-	ListAllByUser(ctx context.Context, userID string) ([]*_model.ShortURIUser, error)
-	ListAllByShortURI(ctx context.Context, shortURIID string) ([]*_model.ShortURIUser, error)
+	Get(ctx context.Context, ID string) (*model.ShortURIUser, error)
+	GetByUnique(ctx context.Context, userID string, shortURIID string) (*model.ShortURIUser, error)
+	ListAllByUser(ctx context.Context, userID string) ([]*model.ShortURIUser, error)
+	ListAllByShortURI(ctx context.Context, shortURIID string) ([]*model.ShortURIUser, error)
 	// Create is create new record
-	Create(ctx context.Context, entity *_model.ShortURIUser) (*_model.ShortURIUser, error)
+	Create(ctx context.Context, entity *model.ShortURIUser) (*model.ShortURIUser, error)
 	// Change is change record attributes
-	Change(ctx context.Context, entity *_model.ShortURIUser) (*_model.ShortURIUser, error)
+	Change(ctx context.Context, entity *model.ShortURIUser) (*model.ShortURIUser, error)
 	// Delete is record soft remove
 	Delete(ctx context.Context, ID string) error
 	// DeleteByUnique is record soft remove by unique key params
@@ -37,8 +37,8 @@ type ShortURIUserRepository interface {
 	// RemoveAllByShortURI is physical all records removal by short uri
 	RemoveAllByShortURI(ctx context.Context, shortURIID string) error
 
-	CreateStmt(ctx context.Context, stmt *sql.Stmt, entity *_model.ShortURIUser) (*_model.ShortURIUser, error)
-	ChangeStmt(ctx context.Context, stmt *sql.Stmt, entity *_model.ShortURIUser) (*_model.ShortURIUser, error)
+	CreateStmt(ctx context.Context, stmt *sql.Stmt, entity *model.ShortURIUser) (*model.ShortURIUser, error)
+	ChangeStmt(ctx context.Context, stmt *sql.Stmt, entity *model.ShortURIUser) (*model.ShortURIUser, error)
 	DeleteStmt(ctx context.Context, stmt *sql.Stmt, ID string) error
 	DeleteByUniqueStmt(ctx context.Context, stmt *sql.Stmt, userID string, shortURIID string) error
 	DeleteAllByUniqueStmt(ctx context.Context, stmt *sql.Stmt, userID string, shortURIIds []string) error
@@ -50,8 +50,8 @@ type ShortURIUserRepository interface {
 	RemoveAllByShortURIStmt(ctx context.Context, stmt *sql.Stmt, shortURIID string) error
 }
 
-func NewShortURIUserRepository(db _db.DB) (ShortURIUserRepository, error) {
-	if db != nil && db.GetDBKind() == _cfg.DBKindPostgres {
+func NewShortURIUserRepository(db db.DB) (ShortURIUserRepository, error) {
+	if db != nil && db.GetDBKind() == config.DBKindPostgres {
 		return newShortURIUserPgRepo(db)
 	}
 

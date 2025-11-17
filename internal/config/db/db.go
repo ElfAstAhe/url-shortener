@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"io"
 
-	_cfg "github.com/ElfAstAhe/url-shortener/internal/config"
+	"github.com/ElfAstAhe/url-shortener/internal/config"
 )
 
 type DB interface {
@@ -14,11 +14,11 @@ type DB interface {
 }
 
 func NewDB(kind string, dsn string) (DB, error) {
-	if kind == _cfg.DBKindPostgres {
+	if kind == config.DBKindPostgres {
 		return newPostgresqlDB(kind, dsn)
 	}
 
-	return newInMemoryDB(_cfg.DBKindInMemory)
+	return newInMemoryDB(config.DBKindInMemory)
 }
 
 func CloseDB(db DB) error {

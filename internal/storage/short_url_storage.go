@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"os"
 
-	_log "github.com/ElfAstAhe/url-shortener/internal/logger"
-	_model "github.com/ElfAstAhe/url-shortener/internal/model"
+	"github.com/ElfAstAhe/url-shortener/internal/logger"
+	"github.com/ElfAstAhe/url-shortener/internal/model"
 	"go.uber.org/zap"
 )
 
@@ -25,7 +25,7 @@ func NewShortURLStorageReader(storagePath string) (*ShortURLStorageReader, error
 	return &ShortURLStorageReader{
 		File:   storage,
 		Reader: bufio.NewScanner(storage),
-		log:    _log.Log.Sugar(),
+		log:    logger.Log.Sugar(),
 	}, nil
 }
 
@@ -44,7 +44,7 @@ func NewShortURLStorageWriter(storagePath string) (*ShortURLStorageWriter, error
 	return &ShortURLStorageWriter{
 		File:   storage,
 		Writer: bufio.NewWriter(storage),
-		log:    _log.Log.Sugar(),
+		log:    logger.Log.Sugar(),
 	}, nil
 }
 
@@ -52,11 +52,11 @@ func (r *ShortURLStorageReader) Close() error {
 	return r.File.Close()
 }
 
-func (r *ShortURLStorageReader) LoadData(cache map[string]*_model.ShortURI) error {
+func (r *ShortURLStorageReader) LoadData(cache map[string]*model.ShortURI) error {
 	clear(cache)
 	for r.Reader.Scan() {
 		data := r.Reader.Bytes()
-		var shortURL _model.ShortURI
+		var shortURL model.ShortURI
 		if err := json.Unmarshal(data, &shortURL); err != nil {
 			r.log.Warn("Failed to unmarshal short URI")
 		}
@@ -74,7 +74,7 @@ func (w *ShortURLStorageWriter) Close() error {
 	return w.File.Close()
 }
 
-func (w *ShortURLStorageWriter) SaveData(cache map[string]*_model.ShortURI) error {
+func (w *ShortURLStorageWriter) SaveData(cache map[string]*model.ShortURI) error {
 	for id, shortURL := range cache {
 		w.log.Infof("Saving short URI %s to %s", id, w.File.Name())
 		data, err := json.Marshal(shortURL)

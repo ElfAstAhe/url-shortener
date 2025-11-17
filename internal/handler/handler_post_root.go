@@ -6,13 +6,13 @@ import (
 	"io"
 	"net/http"
 
-	_mapper "github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
-	_auth "github.com/ElfAstAhe/url-shortener/internal/service/auth"
-	_utl "github.com/ElfAstAhe/url-shortener/internal/utils"
+	"github.com/ElfAstAhe/url-shortener/internal/handler/mapper"
+	"github.com/ElfAstAhe/url-shortener/internal/service/auth"
+	"github.com/ElfAstAhe/url-shortener/internal/utils"
 )
 
 func (cr *chiRouter) rootPOSTHandler(rw http.ResponseWriter, r *http.Request) {
-	userInfo, err := _auth.UserInfoFromRequestJWT(r)
+	userInfo, err := auth.UserInfoFromRequestJWT(r)
 	if err != nil {
 		// Attention!!! For iteration 14 ONLY, remove in future!
 		message := fmt.Sprintf("userInfoFromRequestJWT error: [%v]", err)
@@ -41,9 +41,9 @@ func (cr *chiRouter) rootPOSTHandler(rw http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	defer _utl.CloseOnly(service)
+	defer utils.CloseOnly(service)
 
-	ctx := context.WithValue(r.Context(), _auth.ContextUserInfo, userInfo)
+	ctx := context.WithValue(r.Context(), auth.ContextUserInfo, userInfo)
 	// store data
 	key, conflictErr := service.Store(ctx, string(data))
 	if conflictErr != nil && key == "" {
@@ -53,7 +53,7 @@ func (cr *chiRouter) rootPOSTHandler(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	// prepare outcome data
-	newURI, err := _mapper.ShortenCreateResponseFromKey(key)
+	newURI, err := mapper.ShortenCreateResponseFromKey(key)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 

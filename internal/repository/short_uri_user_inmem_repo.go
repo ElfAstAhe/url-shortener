@@ -5,18 +5,18 @@ import (
 	"database/sql"
 	"errors"
 
-	_db "github.com/ElfAstAhe/url-shortener/internal/config/db"
-	_model "github.com/ElfAstAhe/url-shortener/internal/model"
-	_err "github.com/ElfAstAhe/url-shortener/pkg/errors"
+	"github.com/ElfAstAhe/url-shortener/internal/config/db"
+	"github.com/ElfAstAhe/url-shortener/internal/model"
+	_errs "github.com/ElfAstAhe/url-shortener/pkg/errors"
 	"github.com/google/uuid"
 )
 
 type shortURIUserInMemRepo struct {
-	Cache _db.InMemoryCache
+	Cache db.InMemoryCache
 }
 
-func newShortURIUserInMemRepo(db _db.DB) (*shortURIUserInMemRepo, error) {
-	if cache, ok := db.(_db.InMemoryCache); ok {
+func newShortURIUserInMemRepo(appDb db.DB) (*shortURIUserInMemRepo, error) {
+	if cache, ok := appDb.(db.InMemoryCache); ok {
 		return &shortURIUserInMemRepo{
 			Cache: cache,
 		}, nil
@@ -25,7 +25,7 @@ func newShortURIUserInMemRepo(db _db.DB) (*shortURIUserInMemRepo, error) {
 	return nil, errors.New("db param does not implement InMemoryCache")
 }
 
-func (imsu *shortURIUserInMemRepo) Get(ctx context.Context, ID string) (*_model.ShortURIUser, error) {
+func (imsu *shortURIUserInMemRepo) Get(ctx context.Context, ID string) (*model.ShortURIUser, error) {
 	if ID == "" {
 		return nil, nil
 	}
@@ -35,7 +35,7 @@ func (imsu *shortURIUserInMemRepo) Get(ctx context.Context, ID string) (*_model.
 	return imsu.Cache.GetShortURIUserCache()[ID], nil
 }
 
-func (imsu *shortURIUserInMemRepo) GetByUnique(ctx context.Context, userID string, shortURIID string) (*_model.ShortURIUser, error) {
+func (imsu *shortURIUserInMemRepo) GetByUnique(ctx context.Context, userID string, shortURIID string) (*model.ShortURIUser, error) {
 	if userID == "" || shortURIID == "" {
 		return nil, nil
 	}
@@ -51,8 +51,8 @@ func (imsu *shortURIUserInMemRepo) GetByUnique(ctx context.Context, userID strin
 	return nil, nil
 }
 
-func (imsu *shortURIUserInMemRepo) ListAllByUser(ctx context.Context, userID string) ([]*_model.ShortURIUser, error) {
-	res := make([]*_model.ShortURIUser, 0)
+func (imsu *shortURIUserInMemRepo) ListAllByUser(ctx context.Context, userID string) ([]*model.ShortURIUser, error) {
+	res := make([]*model.ShortURIUser, 0)
 	if userID == "" || len(imsu.Cache.GetShortURIUserCache()) == 0 {
 		return res, nil
 	}
@@ -68,8 +68,8 @@ func (imsu *shortURIUserInMemRepo) ListAllByUser(ctx context.Context, userID str
 	return res, nil
 }
 
-func (imsu *shortURIUserInMemRepo) ListAllByShortURI(ctx context.Context, shortURIID string) ([]*_model.ShortURIUser, error) {
-	res := make([]*_model.ShortURIUser, 0)
+func (imsu *shortURIUserInMemRepo) ListAllByShortURI(ctx context.Context, shortURIID string) ([]*model.ShortURIUser, error) {
+	res := make([]*model.ShortURIUser, 0)
 	if shortURIID == "" || len(imsu.Cache.GetShortURIUserCache()) == 0 {
 		return res, nil
 	}
@@ -85,9 +85,9 @@ func (imsu *shortURIUserInMemRepo) ListAllByShortURI(ctx context.Context, shortU
 	return res, nil
 }
 
-func (imsu *shortURIUserInMemRepo) Create(ctx context.Context, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
-	if err := _model.ValidateShortURIUser(entity); err != nil {
-		return nil, _err.NewAppModelValidationError("short_uri_user", err)
+func (imsu *shortURIUserInMemRepo) Create(ctx context.Context, entity *model.ShortURIUser) (*model.ShortURIUser, error) {
+	if err := model.ValidateShortURIUser(entity); err != nil {
+		return nil, _errs.NewAppModelValidationError("short_uri_user", err)
 	}
 
 	newID, err := uuid.NewRandom()
@@ -103,16 +103,16 @@ func (imsu *shortURIUserInMemRepo) Create(ctx context.Context, entity *_model.Sh
 	return entity, nil
 }
 
-func (imsu *shortURIUserInMemRepo) Change(ctx context.Context, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
-	if err := _model.ValidateShortURIUser(entity); err != nil {
-		return nil, _err.NewAppModelValidationError("short_uri_user", err)
+func (imsu *shortURIUserInMemRepo) Change(ctx context.Context, entity *model.ShortURIUser) (*model.ShortURIUser, error) {
+	if err := model.ValidateShortURIUser(entity); err != nil {
+		return nil, _errs.NewAppModelValidationError("short_uri_user", err)
 	}
 	find, err := imsu.Get(ctx, entity.ID)
 	if err != nil {
 		return nil, err
 	}
 	if find == nil {
-		return nil, _err.NewAppModelNotFoundError(entity.ID, "short_uri_user", "")
+		return nil, _errs.NewAppModelNotFoundError(entity.ID, "short_uri_user", "")
 	}
 
 	imsu.Cache.GetShortURIUserRWMutex().Lock()
@@ -279,11 +279,11 @@ func (imsu *shortURIUserInMemRepo) RemoveAllByShortURI(ctx context.Context, shor
 	return nil
 }
 
-func (imsu *shortURIUserInMemRepo) CreateStmt(ctx context.Context, stmt *sql.Stmt, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
+func (imsu *shortURIUserInMemRepo) CreateStmt(ctx context.Context, stmt *sql.Stmt, entity *model.ShortURIUser) (*model.ShortURIUser, error) {
 	return imsu.Create(ctx, entity)
 }
 
-func (imsu *shortURIUserInMemRepo) ChangeStmt(ctx context.Context, stmt *sql.Stmt, entity *_model.ShortURIUser) (*_model.ShortURIUser, error) {
+func (imsu *shortURIUserInMemRepo) ChangeStmt(ctx context.Context, stmt *sql.Stmt, entity *model.ShortURIUser) (*model.ShortURIUser, error) {
 	return imsu.Change(ctx, entity)
 }
 
@@ -323,7 +323,7 @@ func (imsu *shortURIUserInMemRepo) RemoveAllByShortURIStmt(ctx context.Context, 
 	return imsu.RemoveAllByShortURI(ctx, shortURIID)
 }
 
-func (imsu *shortURIUserInMemRepo) delete(ctx context.Context, entity *_model.ShortURIUser) error {
+func (imsu *shortURIUserInMemRepo) delete(ctx context.Context, entity *model.ShortURIUser) error {
 	if entity == nil {
 		return nil
 	}
